@@ -61,9 +61,16 @@ export function Layout() {
           <IconoMenu />
         </button>
 
+        <img
+          src="/logo-ministerio.svg"
+          alt=""
+          className="topbar__logo-ministerio"
+          onError={(e) => { e.currentTarget.style.display = 'none' }}
+        />
+
         <div className="topbar__marca">
           <Link to="/" className="topbar__logo">OASI</Link>
-          <span className="topbar__sub">Seguimiento de Permisos Sectoriales</span>
+          <span className="topbar__sub">Catastro seguimiento permisos sectoriales</span>
         </div>
 
         <div className="topbar__spacer" />

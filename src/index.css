@@ -89,7 +89,7 @@ a:hover { text-decoration: underline; }
 /* --- Barra superior --- */
 .topbar {
   height: var(--alto-header);
-  background: var(--azul-oscuro);
+  background: var(--azul);
   color: var(--texto-invertido);
   display: flex;
   align-items: center;
@@ -98,7 +98,12 @@ a:hover { text-decoration: underline; }
   position: sticky;
   top: 0;
   z-index: 30;
-  border-bottom: 3px solid var(--celeste);
+}
+
+.topbar__logo-ministerio {
+  height: 32px;
+  width: auto;
+  flex-shrink: 0;
 }
 
 .topbar__marca { display: flex; align-items: baseline; gap: 10px; min-width: 0; }
@@ -119,9 +124,8 @@ a:hover { text-decoration: underline; }
 .topbar__spacer { flex: 1; }
 
 .topbar__gob {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
+  font-size: 12px;
+  letter-spacing: 0.02em;
   color: var(--azul-palido);
   padding-right: 14px;
   border-right: 1px solid rgba(255, 255, 255, 0.2);
@@ -148,9 +152,8 @@ a:hover { text-decoration: underline; }
   padding: 4px 8px;
 }
 .rol-dev__etiqueta {
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.07em;
+  font-size: 11px;
+  letter-spacing: 0.02em;
   color: var(--celeste);
   font-weight: 600;
 }
@@ -195,10 +198,9 @@ a:hover { text-decoration: underline; }
 
 .menu__grupo { margin-bottom: 20px; }
 .menu__titulo {
-  font-size: 10.5px;
+  font-size: 11.5px;
   font-weight: 700;
-  text-transform: uppercase;
-  letter-spacing: 0.09em;
+  letter-spacing: 0.02em;
   color: var(--texto-tenue);
   padding: 0 10px 8px;
 }
@@ -298,9 +300,8 @@ a:hover { text-decoration: underline; }
 .kpi--neutro { border-top-color: var(--celeste); }
 
 .kpi__etiqueta {
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.06em;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
   color: var(--texto-suave);
   font-weight: 600;
   margin-bottom: 6px;
@@ -332,9 +333,8 @@ a:hover { text-decoration: underline; }
   color: var(--azul-oscuro);
   text-align: left;
   font-weight: 600;
-  font-size: 11.5px;
-  text-transform: uppercase;
-  letter-spacing: 0.04em;
+  font-size: 12.5px;
+  letter-spacing: 0.01em;
   padding: 10px 12px;
   border-bottom: 2px solid var(--azul);
   white-space: nowrap;
@@ -534,9 +534,8 @@ a:hover { text-decoration: underline; }
   gap: 16px 24px;
 }
 .dato__etiqueta {
-  font-size: 11px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
+  font-size: 12px;
+  letter-spacing: 0.01em;
   color: var(--texto-tenue);
   font-weight: 600;
   margin-bottom: 3px;
