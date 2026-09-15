@@ -91,27 +91,6 @@ export function Dashboard() {
               selected={filters.rcaStatus}
               onSelect={(status) => toggleFilter('rcaStatus', status)}
             />
-            <div className="panel">
-              <div className="panel__header">
-                <h2>Resumen del universo</h2>
-              </div>
-              <div className="panel__cuerpo">
-                <div className="datos">
-                  <Fact label="Proyectos" value={data.kpis.projectCount} />
-                  <Fact label="Regiones representadas" value={data.projectsByRegion.length} />
-                  <Fact label="Sectores representados" value={data.projectsBySector.length} />
-                  <Fact
-                    label="Con fecha de inicio de construcción"
-                    value={data.timeline.length}
-                  />
-                  <Fact
-                    label="Aún no inician construcción"
-                    value={data.monitor.upcoming.projectCount + data.monitor.later.projectCount}
-                  />
-                  <Fact label="Organismos involucrados" value={data.permitsByAgency.length} />
-                </div>
-              </div>
-            </div>
           </div>
 
           <div className="mt-24">
@@ -124,7 +103,7 @@ export function Dashboard() {
           <div className="mt-24">
             <MonitorProjectsBanner
               upcoming={data.monitor.upcoming}
-              later={data.monitor.later}
+              fewPermits={data.monitor.fewPermits}
             />
           </div>
 
@@ -135,23 +114,21 @@ export function Dashboard() {
           />
 
           <div className="graficos">
-            <PermitsByAgencyChart
-              rows={data.permitsByAgency}
-              onSelectAgency={(agencyId) => toggleFilter('agencyId', String(agencyId))}
-            />
-            <div className="columna" style={{ gap: 20 }}>
-              <PermitStatusDonut
-                rows={data.permitStatus}
-                selected={filters.permitStatus}
-                onSelect={(status) => toggleFilter('permitStatus', status)}
-              />
-            </div>
-          </div>
-
-          <div className="mt-24">
             <PermitsByRegionChart
               rows={data.permitsByRegion}
               onSelectRegion={(region) => toggleFilter('region', region)}
+            />
+            <PermitStatusDonut
+              rows={data.permitStatus}
+              selected={filters.permitStatus}
+              onSelect={(status) => toggleFilter('permitStatus', status)}
+            />
+          </div>
+
+          <div className="mt-24">
+            <PermitsByAgencyChart
+              rows={data.permitsByAgency}
+              onSelectAgency={(agencyId) => toggleFilter('agencyId', String(agencyId))}
             />
           </div>
 
@@ -167,16 +144,5 @@ export function Dashboard() {
         </div>
       )}
     </>
-  )
-}
-
-function Fact({ label, value }: { label: string; value: number }) {
-  return (
-    <div>
-      <div className="dato__etiqueta">{label}</div>
-      <div className="dato__valor" style={{ fontSize: 20, fontWeight: 600 }}>
-        {value.toLocaleString('es-CL')}
-      </div>
-    </div>
   )
 }

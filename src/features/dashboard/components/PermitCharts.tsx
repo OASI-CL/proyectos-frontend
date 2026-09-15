@@ -118,13 +118,13 @@ export function PermitsByRegionChart({ rows, onSelectRegion }: RegionProps) {
     <ChartCard
       title="Permisos por región"
       hint="Clic en una barra para filtrar por región"
-      height={Math.max(300, rows.length * 28)}
+      height={340}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
-          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
-          <XAxis type="number" allowDecimals={false} />
-          <YAxis type="category" dataKey="region" width={130} interval={0} />
+        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }}>
+          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} />
+          <YAxis allowDecimals={false} />
           <Tooltip cursor={{ fill: CHART_CURSOR, opacity: 0.4 }} content={<StatusBreakdownTooltip />} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           {statusBars<RegionPermitRow>('region', (row) => onSelectRegion(row.region))}

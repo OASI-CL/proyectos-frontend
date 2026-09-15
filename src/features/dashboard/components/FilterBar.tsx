@@ -112,7 +112,7 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
             placeholder="Todos"
             options={options.projects.map((p) => ({
               value: String(p.id),
-              label: p.idExcel ? `${p.idExcel} · ${p.name}` : p.name,
+              label: p.idExcel ? `${p.idExcel} - ${p.name}` : p.name,
             }))}
           />
 

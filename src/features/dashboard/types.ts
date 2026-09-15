@@ -119,7 +119,7 @@ export interface DashboardData {
   projectsBySector: SectorProjectRow[]
   rcaStatus: RcaStatusRow[]
   timeline: TimelineProject[]
-  monitor: { upcoming: MonitorBucket; later: MonitorBucket }
+  monitor: { upcoming: MonitorBucket; fewPermits: MonitorBucket }
   permitsByAgency: AgencyPermitRow[]
   permitsByRegion: RegionPermitRow[]
   permitStatus: PermitStatusRow[]

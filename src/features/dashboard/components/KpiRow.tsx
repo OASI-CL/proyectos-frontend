@@ -4,6 +4,8 @@ import type { DashboardKpis } from '../types'
 /**
  * Executive summary of the filtered universe (README_dashboard section 2):
  * investment, employment, projects, permits, overdue permits.
+ *
+ * All tiles share the same plain border — no per-tile colour coding.
  */
 export function KpiRow({ kpis }: { kpis: DashboardKpis }) {
   const overdueShare =
@@ -21,11 +23,11 @@ export function KpiRow({ kpis }: { kpis: DashboardKpis }) {
         <div className="kpi__detalle">MMUSD</div>
       </div>
 
-      <div className="kpi kpi--neutro">
+      <div className="kpi">
         <div className="kpi__etiqueta">Empleo asociado</div>
         <div className="kpi__valor">{formatNumber(kpis.constructionJobs)}</div>
         <div className="kpi__detalle">
-          en construcción · {formatNumber(kpis.operationJobs)} en operación
+          en construcción, {formatNumber(kpis.operationJobs)} en operación
         </div>
       </div>
 
@@ -35,20 +37,18 @@ export function KpiRow({ kpis }: { kpis: DashboardKpis }) {
         <div className="kpi__detalle">en el universo filtrado</div>
       </div>
 
-      <div className="kpi kpi--alerta">
+      <div className="kpi">
         <div className="kpi__etiqueta">Permisos</div>
         <div className="kpi__valor">{formatNumber(kpis.permitCount)}</div>
         <div className="kpi__detalle">
-          {formatNumber(kpis.pendingPermitCount + kpis.overduePermitCount)} pendientes ·{' '}
+          {formatNumber(kpis.pendingPermitCount + kpis.overduePermitCount)} pendientes,{' '}
           {formatNumber(kpis.resolvedPermitCount)} resueltos
         </div>
       </div>
 
-      <div className="kpi kpi--critico">
+      <div className="kpi">
         <div className="kpi__etiqueta">Permisos atrasados</div>
-        <div className="kpi__valor kpi__valor--critico">
-          {formatNumber(kpis.overduePermitCount)}
-        </div>
+        <div className="kpi__valor">{formatNumber(kpis.overduePermitCount)}</div>
         <div className="kpi__detalle">{overdueShare}% de los pendientes</div>
       </div>
     </div>

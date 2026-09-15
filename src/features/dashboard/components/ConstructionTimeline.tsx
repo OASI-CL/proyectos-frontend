@@ -1,7 +1,8 @@
+import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  CartesianGrid, Cell, ReferenceLine, ResponsiveContainer, Scatter,
-  ScatterChart, Tooltip, XAxis, YAxis, ZAxis,
+  Brush, CartesianGrid, Cell, ComposedChart, ReferenceLine, ResponsiveContainer,
+  Scatter, Tooltip, XAxis, YAxis, ZAxis,
 } from 'recharts'
 import { ChartCard } from './ChartCard'
 import { pickChartRow } from './chartEvents'
@@ -20,43 +21,66 @@ interface Point extends TimelineProject {
   z: number
 }
 
+/** Yearly ticks for a given time range — avoids the duplicated-tick-key
+ * warning that comes from letting recharts derive ticks from a time scale
+ * when several points share a date. */
+function yearTicksFor(minTime: number, maxTime: number): number[] {
+  const firstYear = new Date(minTime).getFullYear()
+  const lastYear = new Date(maxTime).getFullYear()
+  const ticks: number[] = []
+  for (let year = firstYear; year <= lastYear; year++) {
+    ticks.push(new Date(year, 0, 1).getTime())
+  }
+  return ticks
+}
+
 /**
  * Construction-start timeline (README_dashboard section 4).
  *
  * Each project is a dot placed on its estimated construction start date.
  * Sector lanes on the Y axis keep the dots from piling up, and the bubble
  * size carries the investment. Clicking a dot opens the project's page.
+ *
+ * Pannable/zoomable via the Brush strip below the chart: drag the handles to
+ * narrow the range (zoom in), drag the middle of the selection to move it
+ * (pan). The Brush's index range is translated into an explicit X-axis
+ * domain — letting recharts derive the domain from `dataMin`/`dataMax`
+ * ignores the brushed selection and the axis never actually rescales.
  */
 export function ConstructionTimeline({ projects, totalProjects }: Props) {
   const navigate = useNavigate()
 
-  const points: Point[] = projects.map((project) => ({
-    ...project,
-    x: new Date(`${project.constructionStartOn.slice(0, 10)}T00:00:00`).getTime(),
-    y: project.sector ?? 'Sin sector',
-    z: project.investmentMmusd ?? 0,
-  }))
+  const points: Point[] = useMemo(
+    () =>
+      projects
+        .map((project) => ({
+          ...project,
+          x: new Date(`${project.constructionStartOn.slice(0, 10)}T00:00:00`).getTime(),
+          y: project.sector ?? 'Sin sector',
+          z: project.investmentMmusd ?? 0,
+        }))
+        .sort((a, b) => a.x - b.x),
+    [projects],
+  )
+
+  const [range, setRange] = useState<[number, number]>([0, Math.max(points.length - 1, 0)])
+
+  // Reset the zoom whenever the filtered project set changes underneath it.
+  useEffect(() => {
+    setRange([0, Math.max(points.length - 1, 0)])
+  }, [points])
 
   const missing = totalProjects - projects.length
   const lanes = [...new Set(points.map((point) => point.y))].sort()
 
-  // Explicit yearly ticks: letting recharts derive them from a time scale
-  // produces duplicated tick keys when several projects share a date.
-  const yearTicks = (() => {
-    if (points.length === 0) return []
-    const times = points.map((point) => point.x)
-    const firstYear = new Date(Math.min(...times)).getFullYear()
-    const lastYear = new Date(Math.max(...times)).getFullYear()
-    const ticks: number[] = []
-    for (let year = firstYear; year <= lastYear; year++) {
-      ticks.push(new Date(year, 0, 1).getTime())
-    }
-    return ticks
-  })()
+  const [startIndex, endIndex] = range
+  const visibleMin = points[startIndex]?.x ?? 0
+  const visibleMax = points[endIndex]?.x ?? 0
+  const yearTicks = points.length > 0 ? yearTicksFor(visibleMin, visibleMax) : []
 
   if (points.length === 0) {
     return (
-      <ChartCard title="Línea de tiempo · inicio de construcción" height={160}>
+      <ChartCard title="Línea de tiempo de inicio de construcción" height={160}>
         <div className="estado-caja">
           <div className="estado-caja__titulo">Sin fechas de inicio de construcción</div>
           <div className="estado-caja__texto">
@@ -69,9 +93,9 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
 
   return (
     <ChartCard
-      title="Línea de tiempo · inicio de construcción"
-      hint="Clic en un punto para abrir la ficha del proyecto"
-      height={Math.max(300, lanes.length * 42)}
+      title="Línea de tiempo de inicio de construcción"
+      hint="Clic en un punto para abrir la ficha, arrastrá la franja de abajo para moverte o hacer zoom"
+      height={Math.max(340, lanes.length * 42) + 40}
       notice={
         missing > 0 ? (
           <span>
@@ -82,12 +106,13 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
       }
     >
       <ResponsiveContainer width="100%" height="100%">
-        <ScatterChart margin={{ top: 12, right: 24, left: 8, bottom: 20 }}>
+        <ComposedChart data={points} margin={{ top: 12, right: 24, left: 8, bottom: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
           <XAxis
             type="number"
             dataKey="x"
-            domain={['dataMin', 'dataMax']}
+            domain={[visibleMin, visibleMax]}
+            allowDataOverflow
             scale="time"
             ticks={yearTicks}
             tickFormatter={(value: number) => String(new Date(value).getFullYear())}
@@ -130,7 +155,7 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
                     <strong>{formatDate(point.constructionStartOn)}</strong>
                   </div>
                   <div className="texto-tenue texto-sm" style={{ marginTop: 4 }}>
-                    {formatNumber(point.pendingPermitCount)} permisos pendientes · clic para
+                    {formatNumber(point.pendingPermitCount)} permisos pendientes, clic para
                     ver la ficha
                   </div>
                 </div>
@@ -139,7 +164,6 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
           />
 
           <Scatter
-            data={points}
             onClick={(event) => {
               const point = pickChartRow<Point>(event, 'id')
               if (point) navigate(`/proyectos/${point.id}`)
@@ -156,7 +180,25 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
               />
             ))}
           </Scatter>
-        </ScatterChart>
+
+          <Brush
+            dataKey="x"
+            height={26}
+            stroke="#006BB9"
+            fill="#D3DEF2"
+            travellerWidth={8}
+            startIndex={startIndex}
+            endIndex={endIndex}
+            onChange={(next) => {
+              if (next.startIndex === undefined || next.endIndex === undefined) return
+              setRange([next.startIndex, next.endIndex])
+            }}
+            tickFormatter={(index: number) => {
+              const point = points[index]
+              return point ? String(new Date(point.x).getFullYear()) : ''
+            }}
+          />
+        </ComposedChart>
       </ResponsiveContainer>
     </ChartCard>
   )

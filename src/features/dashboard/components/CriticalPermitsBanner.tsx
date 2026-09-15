@@ -21,7 +21,7 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
         <span className="texto-sm texto-tenue">
           {permits.length > 0
             ? `${formatNumber(permits.length)} permisos atrasados con mayor prioridad${
-                blocking > 0 ? ` · ${blocking} bloquean un inicio de construcción` : ''
+                blocking > 0 ? `, ${blocking} bloquean un inicio de construcción` : ''
               }`
             : 'Sin permisos atrasados en el universo filtrado'}
         </span>

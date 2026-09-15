@@ -5,19 +5,20 @@ import type { MonitorBucket, MonitorProject } from '../types'
 
 interface Props {
   upcoming: MonitorBucket
-  later: MonitorBucket
+  fewPermits: MonitorBucket
 }
 
-type BucketKey = 'upcoming' | 'later'
+type BucketKey = 'upcoming' | 'fewPermits'
 
 /**
  * "Monitorear proyectos" (README_dashboard section 5).
  *
- * Splits projects that have not started construction yet by how close their
- * estimated start date is: within 3 months, or further out. Those are the
- * ones whose pending permits become urgent.
+ * Two independent lenses on projects that have not started construction yet
+ * — a project can show up in both cards:
+ *   - upcoming: construction starts within the next 3 months
+ *   - fewPermits: only 1 or 2 pending permits left, close to fully cleared
  */
-export function MonitorProjectsBanner({ upcoming, later }: Props) {
+export function MonitorProjectsBanner({ upcoming, fewPermits }: Props) {
   const [openBucket, setOpenBucket] = useState<BucketKey | null>('upcoming')
 
   const buckets: { key: BucketKey; title: string; caption: string; bucket: MonitorBucket; tone: string }[] = [
@@ -29,10 +30,10 @@ export function MonitorProjectsBanner({ upcoming, later }: Props) {
       tone: 'monitor-card--urgent',
     },
     {
-      key: 'later',
-      title: 'Más de 3 meses',
-      caption: 'Inician construcción en más de 3 meses',
-      bucket: later,
+      key: 'fewPermits',
+      title: 'Menos de 3 permisos',
+      caption: 'No iniciaron construcción y les quedan 1 o 2 permisos pendientes',
+      bucket: fewPermits,
       tone: 'monitor-card--later',
     },
   ]
