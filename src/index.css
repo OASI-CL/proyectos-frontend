@@ -265,6 +265,12 @@ a:hover { text-decoration: underline; }
   box-shadow: var(--sombra);
 }
 .panel + .panel { margin-top: 20px; }
+/* Panels placed side by side inside a .graficos grid are DOM siblings too,
+   so the rule above would give the grid a stray top margin on every panel
+   but the first — breaking `align-items: stretch` (the margin eats into the
+   stretched box, so same-row panels end up visibly different heights).
+   .graficos already spaces its items with `gap`, so reset it there. */
+.graficos > .panel + .panel { margin-top: 0; }
 
 .panel__header {
   padding: 14px 18px;
