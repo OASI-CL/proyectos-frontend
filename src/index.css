@@ -101,7 +101,7 @@ a:hover { text-decoration: underline; }
 }
 
 .topbar__logo-ministerio {
-  height: 32px;
+  height: 50px;
   width: auto;
   flex-shrink: 0;
 }

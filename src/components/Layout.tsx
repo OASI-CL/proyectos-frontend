@@ -62,7 +62,7 @@ export function Layout() {
         </button>
 
         <img
-          src="/logo-ministerio.svg"
+          src="/logo-ministerio.png"
           alt=""
           className="topbar__logo-ministerio"
           onError={(e) => { e.currentTarget.style.display = 'none' }}
