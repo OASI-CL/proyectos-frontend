@@ -658,6 +658,129 @@ a:hover { text-decoration: underline; }
 .tabular { font-variant-numeric: tabular-nums; }
 
 /* ==========================================================================
+   Dashboard
+   (new code uses English class names; the older pages still use Spanish ones)
+   ========================================================================== */
+
+.filter-bar { margin-bottom: 14px; }
+
+/* --- Active filter chips --- */
+.active-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-bottom: 18px;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 5px 10px;
+  border-radius: 999px;
+  border: 1px solid var(--azul);
+  background: var(--azul-palido);
+  color: var(--azul-oscuro);
+  font-family: inherit;
+  font-size: 12.5px;
+  cursor: pointer;
+}
+.chip:hover { background: #C3D2EC; }
+.chip__key { color: var(--texto-suave); }
+.chip__value { font-weight: 600; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.chip__remove { font-size: 15px; line-height: 1; color: var(--azul); }
+
+/* --- Section dividers (PROYECTOS / PERMISOS) --- */
+.section-title {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin: 32px 0 16px;
+  padding-bottom: 10px;
+  border-bottom: 2px solid var(--azul);
+}
+.section-title__text {
+  font-size: 19px;
+  color: var(--azul-oscuro);
+}
+.section-title__description {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--texto-suave);
+}
+
+/* Dim the content while a new filtered universe loads, instead of blanking it */
+.is-refreshing {
+  opacity: 0.55;
+  transition: opacity 0.12s ease;
+  pointer-events: none;
+}
+
+/* --- "Monitorear proyectos" banner --- */
+.monitor-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 14px;
+}
+
+.monitor-card {
+  text-align: left;
+  font-family: inherit;
+  border: 1px solid var(--borde);
+  border-left: 4px solid var(--gris-palido);
+  border-radius: var(--radio-lg);
+  background: var(--fondo-panel);
+  padding: 14px 16px;
+  cursor: pointer;
+}
+.monitor-card:hover { background: #FAFBFE; }
+.monitor-card--open { box-shadow: 0 0 0 2px rgba(0, 107, 185, 0.18); }
+.monitor-card--urgent { border-left-color: var(--rojo); background: #FFF9F9; }
+.monitor-card--later { border-left-color: var(--celeste); }
+
+.monitor-card__title { font-weight: 600; color: var(--azul-oscuro); font-size: 15px; }
+.monitor-card__caption { font-size: 12px; color: var(--texto-tenue); margin-top: 2px; }
+.monitor-card__count {
+  font-size: 30px;
+  font-weight: 700;
+  color: var(--azul-oscuro);
+  line-height: 1.1;
+  margin: 8px 0 10px;
+  font-variant-numeric: tabular-nums;
+}
+
+.monitor-card__stats {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  margin: 0;
+}
+.monitor-card__stats dt {
+  font-size: 11px;
+  color: var(--texto-tenue);
+  font-weight: 600;
+}
+.monitor-card__stats dd {
+  margin: 2px 0 0;
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--texto);
+  font-variant-numeric: tabular-nums;
+}
+
+.monitor-card__toggle {
+  margin-top: 12px;
+  font-size: 12.5px;
+  font-weight: 600;
+  color: var(--azul);
+}
+
+/* --- Critical permits --- */
+.critical-panel { border-top: 3px solid var(--rojo); }
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 

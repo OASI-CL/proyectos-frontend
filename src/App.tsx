@@ -1,6 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom'
 import { Layout } from './components/Layout'
-import { Dashboard } from './pages/Dashboard'
+import { Dashboard } from './features/dashboard/Dashboard'
 import { Proyectos } from './pages/Proyectos'
 import { ProyectoDetalle } from './pages/ProyectoDetalle'
 import { ProyectoNuevo } from './pages/ProyectoNuevo'

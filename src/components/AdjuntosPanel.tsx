@@ -24,7 +24,7 @@ function tamanio(bytes: number | null): string {
   if (bytes < 1024 * 1024) return `${numero(bytes / 1024, 1)} KB`
   return `${numero(bytes / (1024 * 1024), 1)} MB`
 }
-
+ 
 /**
  * Adjuntos del permiso (resoluciones, documentos).
  *
