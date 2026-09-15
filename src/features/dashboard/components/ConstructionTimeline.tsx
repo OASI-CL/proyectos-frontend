@@ -91,11 +91,14 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
     )
   }
 
+  const chartAreaHeight = Math.max(300, lanes.length * 42)
+  const captionHeight = 26
+
   return (
     <ChartCard
       title="Línea de tiempo de inicio de construcción"
       hint="Clic en un punto para abrir la ficha, arrastrá la franja de abajo para moverte o hacer zoom"
-      height={Math.max(340, lanes.length * 42) + 40}
+      height={chartAreaHeight + captionHeight}
       notice={
         missing > 0 ? (
           <span>
@@ -105,7 +108,14 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
         ) : undefined
       }
     >
-      <ResponsiveContainer width="100%" height="100%">
+      <div
+        className="texto-sm texto-tenue"
+        style={{ height: captionHeight, marginBottom: 4 }}
+      >
+        El tamaño de cada punto representa la inversión del proyecto (MMUSD): a mayor
+        inversión, más grande el punto.
+      </div>
+      <ResponsiveContainer width="100%" height={chartAreaHeight}>
         <ComposedChart data={points} margin={{ top: 12, right: 24, left: 8, bottom: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} />
           <XAxis

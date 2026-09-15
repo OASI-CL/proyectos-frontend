@@ -202,6 +202,68 @@ nunca confiar en eso como control de acceso).
 
 ---
 
+## Dashboard: endpoints y supuestos por gráfico
+
+El dashboard (`src/features/dashboard/`) hace solo dos llamadas a la API — no
+hay un endpoint por gráfico, todos los datos vienen juntos:
+
+- **`GET /catalog`** — una sola vez, al entrar a la página. Llena los 7
+  dropdowns del filtro (ministerio, organismo, sector, estado de proyecto,
+  estado de permiso, empresa, proyecto) y los hace dependientes entre sí
+  (`useFilterOptions` en `useDashboardData.ts`, todo en el navegador).
+- **`GET /dashboard?<filtros>`** — se repite cada vez que cambia un filtro
+  (cualquiera: un dropdown, un clic en una barra, un clic en el donut). Los
+  filtros van como query params: `ministryId`, `agencyId`, `sector`,
+  `region`, `projectStatus`, `permitStatus`, `companyId`, `projectId`,
+  `rcaStatus`. La lógica de qué filtro aplica a qué tabla está en
+  `proyectos-backend/src/routes/dashboard.ts`, función `buildScope()`.
+
+Cada gráfico lee una llave distinta de esa única respuesta:
+
+| Gráfico | Llave de la respuesta | Supuesto que hace (y dónde cambiarlo) |
+|---|---|---|
+| KPIs (inversión, empleo, proyectos, permisos, atrasados) | `kpis` | Ver fila "Pendiente / Pendiente atrasado" abajo — los KPIs usan la misma clasificación. |
+| Proyectos por región | `projectsByRegion` | Ninguno — cuenta directo `proyectos.region`. Los `NULL` se agrupan como "Sin región". |
+| Proyectos por sector | `projectsBySector` | Ídem, agrupa `NULL` como "Sin sector". Con datos reales, ~1/3 de los proyectos no tiene sector (dato sucio del Excel, no del código). |
+| Estado RCA | `rcaStatus` | **El más frágil.** `proyectos.estado_ambiental` es texto libre, casi siempre vacío (314/317 en los datos actuales). Se clasifica con `ILIKE` sobre ese texto en `src/db/sql.ts` → `rcaStatusSql()`: contiene "aprob" → aprobada, "suspend" → suspendida, "trámite"/"evalua" → en trámite, vacío → sin información. Si cargan datos más limpios (o una columna de estado real), este es el lugar para cambiarlo. |
+| Línea de tiempo de inicio de construcción | `timeline` | Solo incluye proyectos con `fecha_inicio_construccion` no nula (139 de 317 hoy). El tamaño del punto es `inversion_mmusd`. El eje Y agrupa por sector, no por proyecto individual. |
+| Monitorear proyectos — "Próximos a iniciar" | `monitor.upcoming` | `etapa = 'No se ha iniciado'` y `fecha_inicio_construccion` entre hoy y +90 días. |
+| Monitorear proyectos — "Menos de 3 permisos" | `monitor.fewPermits` | `etapa = 'No se ha iniciado'` y entre 1 y 2 permisos pendientes (`pending_permit_count > 0 AND < 3`). **No depende de la fecha de inicio** — es una categoría aparte, un proyecto puede aparecer en las dos tarjetas a la vez. Si "menos de 3 permisos" debería contar permisos totales en vez de pendientes, o incluir los que ya no tienen ninguno pendiente, se ajusta en `proyectos-backend/src/routes/dashboard.ts`, sección "Monitor projects banner". |
+| Permisos por región / por organismo | `permitsByRegion` / `permitsByAgency` | Mismo cálculo de estado que el donut (ver abajo). |
+| Distribución por estado (donut) | `permitStatus` | Ver fila siguiente. |
+| Permisos críticos | `criticalPermits` | Son los permisos en estado "atrasado" (ver abajo), ordenados primero por si bloquean el inicio de construcción de su proyecto (`construction_start_on` dentro de 90 días → prioridad "high"), y dentro de cada grupo, por más días de atraso. Muestra los primeros 25. |
+
+### Pendiente / Pendiente atrasado / Resuelto
+
+Esta clasificación (`src/db/sql.ts` → `PERMIT_TRACKING_STATUS_SQL`) la usan
+**todos** los gráficos de permisos, el donut y los KPIs. Es el supuesto más
+importante de todo el dashboard:
+
+- **Resuelto**: `estado IN ('Resuelto', 'Descartado')`. Un permiso descartado
+  cuenta como resuelto porque su trámite terminó, no porque se haya aprobado.
+  Si eso no es lo que quieren, es una categoría aparte fácil de separar.
+- **Pendiente atrasado**: si el permiso tiene `fecha_resolucion_estimada` y ya
+  pasó, está atrasado. **Pero esa fecha solo existe en 27 de los 895 permisos
+  pendientes** (dato del Excel origen). Para el resto (la inmensa mayoría) se
+  usa un umbral fijo: más de **180 días** desde el ingreso sin resolución — el
+  mismo criterio "Supera 6 Meses" que ya usaba el Excel. Ese número
+  (`OVERDUE_THRESHOLD_DAYS`) está en `src/db/sql.ts` como constante, cambiarlo
+  ahí lo cambia en todo el dashboard a la vez.
+- **Pendiente**: todo lo que no cae en las dos anteriores.
+
+### Dónde se aplican los filtros
+
+`buildScope()` en `proyectos-backend/src/routes/dashboard.ts` arma dos
+universos por separado en la misma consulta (dos CTEs, `permits` y
+`projects`) y los mantiene sincronizados: un filtro de permiso (organismo,
+ministerio, estado del permiso) también recorta qué proyectos se cuentan
+—solo quedan los que todavía tienen al menos un permiso que matchea—, y un
+filtro de proyecto (sector, región, empresa) recorta también los permisos.
+Es el mecanismo que hace que todo el dashboard reaccione a un solo filtro
+compartido (ver `README_dashboard.md`, sección 12).
+
+---
+
 ## Deploy
 
 Pensado para AWS Amplify Hosting:

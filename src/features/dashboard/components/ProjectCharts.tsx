@@ -11,6 +11,9 @@ import {
 import { formatMmusd, formatNumber } from '../../../lib/formatters'
 import type { RcaStatus, RcaStatusRow, RegionProjectRow, SectorProjectRow } from '../types'
 
+/** Shared by region/sector so the two panels always line up at the same height. */
+export const PROJECT_CHART_HEIGHT = 340
+
 // ----------------------------------------------------------------------------
 // 3.1 Projects by region
 // ----------------------------------------------------------------------------
@@ -26,7 +29,7 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
     <ChartCard
       title="Proyectos por región"
       hint="Clic en una barra para filtrar"
-      height={320}
+      height={PROJECT_CHART_HEIGHT}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }}>
@@ -87,7 +90,7 @@ export function ProjectsBySectorChart({ rows, selected, onSelect }: SectorProps)
     <ChartCard
       title="Proyectos por sector"
       hint="Clic en una barra para filtrar"
-      height={320}
+      height={PROJECT_CHART_HEIGHT}
     >
       <ResponsiveContainer width="100%" height="100%">
         <BarChart

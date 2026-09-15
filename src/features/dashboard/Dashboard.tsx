@@ -23,10 +23,16 @@ import { CriticalPermitsBanner } from './components/CriticalPermitsBanner'
 /**
  * Monitoring dashboard for investment projects and their permits.
  *
- * One filter state drives everything: summary → projects → timeline →
- * monitoring → permits → agencies → regions → donut → critical permits
+ * One filter state drives everything: summary → projects → timeline+donut →
+ * monitoring → permits by region → permits by agency → critical permits
  * (README_dashboard section 12). Charts are not isolated; clicking a bar, a
  * slice or a region writes into the same filter state.
+ *
+ * The status donut sits next to the construction timeline (not in the
+ * Permisos section with the other permit charts) purely for page layout —
+ * the timeline is tall, so pairing it with the donut avoids a very long
+ * single-column stack. It still filters permits by status like any other
+ * donut click would.
  */
 export function Dashboard() {
   const { rol, esEmpresa } = useAuth()
@@ -93,10 +99,15 @@ export function Dashboard() {
             />
           </div>
 
-          <div className="mt-24">
+          <div className="graficos mt-24">
             <ConstructionTimeline
               projects={data.timeline}
               totalProjects={data.kpis.projectCount}
+            />
+            <PermitStatusDonut
+              rows={data.permitStatus}
+              selected={filters.permitStatus}
+              onSelect={(status) => toggleFilter('permitStatus', status)}
             />
           </div>
 
@@ -117,11 +128,6 @@ export function Dashboard() {
             <PermitsByRegionChart
               rows={data.permitsByRegion}
               onSelectRegion={(region) => toggleFilter('region', region)}
-            />
-            <PermitStatusDonut
-              rows={data.permitStatus}
-              selected={filters.permitStatus}
-              onSelect={(status) => toggleFilter('permitStatus', status)}
             />
           </div>
 
