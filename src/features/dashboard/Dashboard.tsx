@@ -140,9 +140,21 @@ export function Dashboard() {
             <CriticalPermitsBanner permits={data.criticalPermits} />
           </div>
 
-          {rol === 'organismo_lector' && (
+          {/* The scope is enforced server-side; this just says so out loud, so
+              nobody reads a partial number as the national total. */}
+          {rol === 'organismo' && (
             <div className="alerta alerta--info mt-24">
-              Estás viendo solo los permisos de tu organismo.
+              Estás viendo solo los permisos de tu organismo y los proyectos asociados.
+            </div>
+          )}
+          {rol === 'region' && (
+            <div className="alerta alerta--info mt-24">
+              Estás viendo solo los proyectos de tu región, de todos los organismos.
+            </div>
+          )}
+          {rol === 'empresa' && (
+            <div className="alerta alerta--info mt-24">
+              Estás viendo solo tus proyectos y sus permisos.
             </div>
           )}
         </div>

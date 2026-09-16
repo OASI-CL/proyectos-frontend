@@ -9,15 +9,23 @@ export interface UsuarioActual {
   rol: RolUsuario
   empresaId: number | null
   organismoId: number | null
+  region: string | null
 }
 
 /**
- * Sesión del usuario.
+ * Current session and what the role is allowed to do.
  *
- * Hoy el backend corre en AUTH_MODE=dev y devuelve un usuario simulado según
- * el rol elegido en la barra superior. Cuando Cognito esté montado, acá va el
- * `fetchAuthSession()` de aws-amplify y el rol sale del JWT — la interfaz que
- * consumen las páginas (usuario, puedeEditar, etc.) no cambia.
+ * The flags below mirror middleware/scope.ts on the backend. They only drive
+ * what the UI offers — the backend enforces the same matrix on every request,
+ * so hiding a button is a convenience, never the access control.
+ *
+ * | role      | sees                                      | writes         |
+ * |-----------|-------------------------------------------|----------------|
+ * | admin     | everything                                | direct         |
+ * | oasi      | everything                                | direct+approve |
+ * | organismo | its agency's permits + those projects      | needs approval |
+ * | empresa   | its own projects + permits                 | needs approval |
+ * | region    | every project of its region, all agencies  | read-only      |
  */
 export function useAuth() {
   const [usuario, setUsuario] = useState<UsuarioActual | null>(null)
@@ -45,7 +53,7 @@ export function useAuth() {
     }
   }, [rolDev])
 
-  /** Cambia el rol simulado y recarga la app para refrescar todas las vistas. */
+  /** Switches the simulated role and reloads so every view refetches. */
   function cambiarRolDev(nuevo: RolDev) {
     guardarRolDev(nuevo)
     setRolDevEstado(nuevo)
@@ -54,18 +62,34 @@ export function useAuth() {
 
   const rol = usuario?.rol ?? 'oasi'
 
+  const esAdmin = rol === 'admin'
+  const esOasi = rol === 'oasi' || rol === 'admin'
+  const esEmpresa = rol === 'empresa'
+  const esOrganismo = rol === 'organismo'
+  const esRegion = rol === 'region'
+
   return {
     usuario,
     cargando,
     rol,
     rolDev,
     cambiarRolDev,
-    esAdmin: rol === 'admin',
-    esOasi: rol === 'oasi' || rol === 'admin',
-    esEmpresa: rol === 'empresa',
-    /** organismo_lector es el único rol de solo lectura. */
-    puedeEditar: rol !== 'organismo_lector',
-    /** Solo OASI y admin ven comités y el resumen completo por organismo. */
-    veComites: rol === 'oasi' || rol === 'admin',
+
+    esAdmin,
+    esOasi,
+    esEmpresa,
+    esOrganismo,
+    esRegion,
+
+    /** 'region' is the only read-only role. */
+    puedeEditar: !esRegion,
+    /** Whether this role's edits are queued for OASI instead of applied. */
+    requiereAprobacion: esEmpresa || esOrganismo,
+    /** Can review other people's change requests. */
+    puedeAprobar: esOasi,
+    /** An organismo edits its permits but does not own projects. */
+    puedeCrearProyectos: esOasi || esEmpresa,
+    /** Only OASI and admin run the committee sessions. */
+    veComites: esOasi,
   }
 }

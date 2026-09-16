@@ -1,0 +1,35 @@
+# AWS Amplify Hosting build settings.
+#
+# Amplify watches the GitHub repo directly — that IS the frontend CI/CD, so
+# there is no GitHub Action for deploying it: push to main and Amplify builds
+# and publishes. The workflow in .github/workflows/ci.yml only type-checks
+# pull requests, which Amplify does not do.
+#
+# The VITE_* values come from Amplify's environment variables (App settings →
+# Environment variables), not from a committed .env. Vite inlines them at
+# build time, so a change there needs a redeploy.
+version: 1
+frontend:
+  phases:
+    preBuild:
+      commands:
+        - npm ci
+    build:
+      commands:
+        - npm run build
+  artifacts:
+    baseDirectory: dist
+    files:
+      - '**/*'
+  cache:
+    paths:
+      - node_modules/**/*
+customHeaders:
+  - pattern: '**'
+    headers:
+      - key: X-Frame-Options
+        value: DENY
+      - key: X-Content-Type-Options
+        value: nosniff
+      - key: Referrer-Policy
+        value: strict-origin-when-cross-origin

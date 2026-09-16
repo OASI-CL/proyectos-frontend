@@ -11,6 +11,7 @@ import { Comites } from './pages/Comites'
 import { ComiteDetalle } from './pages/ComiteDetalle'
 import { Organismos } from './pages/Organismos'
 import { AdminUsuarios } from './pages/AdminUsuarios'
+import { Approvals } from './features/approvals/Approvals'
 
 export default function App() {
   return (
@@ -31,6 +32,7 @@ export default function App() {
           <Route path="/comites/:numero" element={<ComiteDetalle />} />
 
           <Route path="/organismos" element={<Organismos />} />
+          <Route path="/aprobaciones" element={<Approvals />} />
           <Route path="/admin/usuarios" element={<AdminUsuarios />} />
 
           <Route path="*" element={<Navigate to="/" replace />} />

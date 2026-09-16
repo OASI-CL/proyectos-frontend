@@ -95,6 +95,18 @@ export const SEMAFORO_LABELS: Record<string, string> = {
 export const ROLE_LABELS: Record<string, string> = {
   admin: 'Administrador',
   oasi: 'Equipo OASI',
-  organismo_lector: 'Organismo (lectura)',
+  organismo: 'Organismo sectorial',
   empresa: 'Empresa titular',
+  region: 'Región',
+}
+
+/** One-line description of what each role can do, for the admin screen. */
+export const ROLE_DESCRIPTIONS: Record<string, string> = {
+  admin: 'Administra usuarios, roles y alcances. Ve y edita todo.',
+  oasi: 'Ve todo, edita directo y aprueba lo que envían empresas y organismos.',
+  organismo:
+    'Ve los permisos de su organismo y los proyectos asociados. Puede proponer cambios, que OASI aprueba.',
+  empresa:
+    'Ve solo sus proyectos y permisos. Puede crear proyectos y permisos, que OASI aprueba.',
+  region: 'Ve todos los proyectos y permisos de su región, de cualquier organismo. Solo lectura.',
 }

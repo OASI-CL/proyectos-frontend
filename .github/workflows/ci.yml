@@ -1,0 +1,35 @@
+name: CI
+
+# Deploys are handled by Amplify Hosting (it builds straight from this repo on
+# every push to main — see amplify.yml). This workflow only exists to
+# type-check and lint pull requests before they get merged, which Amplify
+# does not do.
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  build:
+    name: Type-check, lint and build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+
+      - run: npm ci
+
+      - name: Lint
+        run: npm run lint
+
+      # `npm run build` runs `tsc -b` first, so this catches type errors too.
+      - name: Type-check and build
+        run: npm run build
+        env:
+          # Build-time only; the real value comes from Amplify's env vars.
+          VITE_API_URL: https://example.invalid

@@ -1,11 +1,12 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
-import { ETIQUETAS_ROL } from '../lib/format'
+import { api } from '../lib/api'
+import { ROLE_LABELS } from '../lib/formatters'
 import type { RolUsuario } from '../shared/types'
 import {
   IconoDashboard, IconoProyectos, IconoPermisos, IconoComites,
-  IconoOrganismos, IconoUsuarios, IconoMenu,
+  IconoOrganismos, IconoUsuarios, IconoMenu, IconoAprobaciones,
 } from './Iconos'
 
 /**
@@ -17,12 +18,14 @@ function SelectorRolDev() {
   const { rolDev, cambiarRolDev } = useAuth()
 
   function alCambiar(rol: RolUsuario) {
-    // Scope de ejemplo para poder ver el filtrado funcionando: empresa 1 (BHP)
-    // y organismo 1. Con Cognito esto sale de la tabla usuarios.
+    // Example scope so the filtering is visible while testing: company 1
+    // (BHP), agency 5 (DGA), region Antofagasta. With Cognito this comes from
+    // the usuarios table instead.
     cambiarRolDev({
       rol,
       empresaId: rol === 'empresa' ? 1 : null,
-      organismoId: rol === 'organismo_lector' ? 1 : null,
+      organismoId: rol === 'organismo' ? 5 : null,
+      region: rol === 'region' ? 'Antofagasta' : null,
     })
   }
 
@@ -36,16 +39,41 @@ function SelectorRolDev() {
       >
         <option value="admin">Administrador</option>
         <option value="oasi">Equipo OASI</option>
-        <option value="organismo_lector">Organismo (lectura)</option>
-        <option value="empresa">Empresa titular</option>
+        <option value="organismo">Organismo (DGA)</option>
+        <option value="empresa">Empresa titular (BHP)</option>
+        <option value="region">Región (Antofagasta)</option>
       </select>
     </div>
   )
 }
 
+/** Pending-approvals count for the nav badge. */
+function useContadorAprobaciones() {
+  const [pendientes, setPendientes] = useState(0)
+
+  useEffect(() => {
+    let cancelado = false
+    api
+      .get<{ pendientes: number }>('/approvals/count')
+      .then((r) => {
+        if (!cancelado) setPendientes(r.data.pendientes)
+      })
+      .catch(() => {
+        if (!cancelado) setPendientes(0)
+      })
+    return () => {
+      cancelado = true
+    }
+  }, [])
+
+  return pendientes
+}
+
 export function Layout() {
-  const { usuario, veComites, esAdmin } = useAuth()
+  const { usuario, veComites, esAdmin, esRegion } = useAuth()
   const [menuAbierto, setMenuAbierto] = useState(false)
+  // 'region' is read-only, so it never has anything to approve or follow up on.
+  const pendientes = useContadorAprobaciones()
 
   const cerrarMenu = () => setMenuAbierto(false)
 
@@ -106,6 +134,20 @@ export function Layout() {
             )}
           </div>
 
+          {!esRegion && (
+            <div className="menu__grupo">
+              <div className="menu__titulo">Revisión</div>
+              <NavLink
+                to="/aprobaciones"
+                className={({ isActive }) => `menu__item ${isActive ? 'activo' : ''}`}
+                onClick={cerrarMenu}
+              >
+                <IconoAprobaciones /> Aprobaciones
+                {pendientes > 0 && <span className="menu__badge">{pendientes}</span>}
+              </NavLink>
+            </div>
+          )}
+
           {esAdmin && (
             <div className="menu__grupo">
               <div className="menu__titulo">Administración</div>
@@ -119,7 +161,7 @@ export function Layout() {
             <div style={{ marginTop: 'auto', paddingTop: 16, borderTop: '1px solid var(--borde)' }}>
               <div className="texto-sm" style={{ padding: '0 10px' }}>
                 <div style={{ fontWeight: 600, color: 'var(--azul-oscuro)' }}>{usuario.nombre}</div>
-                <div className="texto-tenue">{ETIQUETAS_ROL[usuario.rol] ?? usuario.rol}</div>
+                <div className="texto-tenue">{ROLE_LABELS[usuario.rol] ?? usuario.rol}</div>
               </div>
             </div>
           )}
