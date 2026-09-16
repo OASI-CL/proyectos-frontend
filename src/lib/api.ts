@@ -1,13 +1,15 @@
 import axios from 'axios'
+import { cognitoConfigurado, obtenerIdToken } from './auth'
 import type { RolUsuario } from '../shared/types'
 
 /**
- * Cliente HTTP contra la API de OASI.
+ * HTTP client for the OASI API.
  *
- * Auth: en producción va el JWT de Cognito en el header Authorization.
- * Mientras Cognito no esté montado, el backend corre con AUTH_MODE=dev y
- * acepta un rol simulado por headers (ver el selector de rol de la barra
- * superior). Los headers x-dev-* los ignora el backend en modo cognito.
+ * Auth: when Cognito is configured, every request carries the ID token and
+ * the backend verifies it against the User Pool's JWKS. When it is not, the
+ * backend runs AUTH_MODE=dev and takes the role from the x-dev-* headers (the
+ * switcher in the top bar). The x-dev-* headers are ignored by a backend
+ * running in cognito mode, so they are harmless either way.
  */
 
 export const api = axios.create({
@@ -41,8 +43,10 @@ export function guardarRolDev(valor: RolDev) {
   }
 }
 
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('oasi_token')
+api.interceptors.request.use(async (config) => {
+  // Async on purpose: Amplify refreshes the token here if it is close to
+  // expiring, so a long session does not start 401-ing mid-use.
+  const token = await obtenerIdToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }
@@ -61,6 +65,9 @@ api.interceptors.request.use((config) => {
 /** Saca un mensaje legible de un error de axios. */
 export function mensajeError(error: unknown): string {
   if (axios.isAxiosError(error)) {
+    if (error.response?.status === 401 && cognitoConfigurado) {
+      return 'Tu sesión expiró. Volvé a iniciar sesión.'
+    }
     if (error.response?.data?.message) return String(error.response.data.message)
     if (error.code === 'ERR_NETWORK') {
       return 'No se pudo conectar con el servidor. ¿Está corriendo el backend en ' +

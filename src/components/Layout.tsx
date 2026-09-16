@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, NavLink, Outlet } from 'react-router-dom'
 import { useAuth } from '../hooks/useAuth'
 import { api } from '../lib/api'
+import { cerrarSesion, cognitoConfigurado } from '../lib/auth'
 import { ROLE_LABELS } from '../lib/formatters'
 import type { RolUsuario } from '../shared/types'
 import {
@@ -104,7 +105,27 @@ export function Layout() {
         <div className="topbar__spacer" />
 
         <span className="topbar__gob">Gobierno de Chile</span>
-        <SelectorRolDev />
+        {/* The role switcher only works against AUTH_MODE=dev, so it is hidden
+            the moment a real user pool is configured. */}
+        {!cognitoConfigurado && <SelectorRolDev />}
+        {cognitoConfigurado && usuario && (
+          <div className="topbar__sesion">
+            <div className="topbar__usuario">
+              <div className="topbar__usuario-nombre">{usuario.nombre}</div>
+              <div className="topbar__usuario-rol">{ROLE_LABELS[usuario.rol] ?? usuario.rol}</div>
+            </div>
+            <button
+              type="button"
+              className="topbar__salir"
+              onClick={async () => {
+                await cerrarSesion()
+                window.location.reload()
+              }}
+            >
+              Salir
+            </button>
+          </div>
+        )}
       </header>
 
       <div className="cuerpo">
