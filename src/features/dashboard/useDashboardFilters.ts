@@ -23,6 +23,8 @@ export const FILTER_KEYS = [
   'companyId',
   'projectId',
   'rcaStatus',
+  'startDateFrom',
+  'startDateTo',
 ] as const
 
 export type FilterKey = (typeof FILTER_KEYS)[number]

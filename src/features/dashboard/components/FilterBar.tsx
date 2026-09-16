@@ -66,6 +66,15 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
           />
 
           <Select
+            id="f-region"
+            label="Región"
+            value={filters.region ?? ''}
+            onChange={(value) => setFilter('region', value)}
+            placeholder="Todas"
+            options={options.regions.map((r) => ({ value: r, label: r }))}
+          />
+
+          <Select
             id="f-sector"
             label="Sector"
             value={filters.sector ?? ''}
@@ -127,6 +136,34 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
               label: RCA_STATUS_LABELS[status],
             }))}
           />
+
+          <div className="campo">
+            <label className="campo__label" htmlFor="f-start-from">
+              Inicio de construcción desde
+            </label>
+            <input
+              id="f-start-from"
+              className="input"
+              type="date"
+              value={filters.startDateFrom ?? ''}
+              max={filters.startDateTo ?? undefined}
+              onChange={(event) => setFilter('startDateFrom', event.target.value || null)}
+            />
+          </div>
+
+          <div className="campo">
+            <label className="campo__label" htmlFor="f-start-to">
+              Inicio de construcción hasta
+            </label>
+            <input
+              id="f-start-to"
+              className="input"
+              type="date"
+              value={filters.startDateTo ?? ''}
+              min={filters.startDateFrom ?? undefined}
+              onChange={(event) => setFilter('startDateTo', event.target.value || null)}
+            />
+          </div>
         </div>
       </div>
     </div>

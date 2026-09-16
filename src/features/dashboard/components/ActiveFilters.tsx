@@ -1,4 +1,5 @@
 import { PERMIT_STATUS_LABELS, RCA_STATUS_LABELS } from '../constants'
+import { formatDate } from '../../../lib/formatters'
 import type { Catalog, PermitTrackingStatus, RcaStatus } from '../types'
 import type { DashboardFilters, FilterKey } from '../useDashboardFilters'
 
@@ -18,6 +19,8 @@ const FILTER_LABELS: Record<FilterKey, string> = {
   companyId: 'Empresa',
   projectId: 'Proyecto',
   rcaStatus: 'Estado RCA',
+  startDateFrom: 'Inicio construcción desde',
+  startDateTo: 'Inicio construcción hasta',
 }
 
 /**
@@ -47,6 +50,9 @@ export function ActiveFilters({ filters, catalog, setFilter }: Props) {
         return PERMIT_STATUS_LABELS[value as PermitTrackingStatus] ?? value
       case 'rcaStatus':
         return RCA_STATUS_LABELS[value as RcaStatus] ?? value
+      case 'startDateFrom':
+      case 'startDateTo':
+        return formatDate(value)
       default:
         return value
     }

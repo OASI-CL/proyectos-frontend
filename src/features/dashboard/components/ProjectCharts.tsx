@@ -1,6 +1,6 @@
 import {
   Bar, BarChart, Cell, CartesianGrid, Legend, Pie, PieChart,
-  ResponsiveContainer, Tooltip, XAxis, YAxis,
+  ResponsiveContainer, Tooltip, Treemap, XAxis, YAxis,
 } from 'recharts'
 import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
@@ -85,63 +85,127 @@ interface SectorProps {
   onSelect: (sector: string) => void
 }
 
+/**
+ * Treemap: each sector is a rectangle sized proportionally to its share of
+ * projects, with the % printed inside — the "Tableau-style" square chart
+ * with areas, as opposed to a bar chart.
+ */
 export function ProjectsBySectorChart({ rows, selected, onSelect }: SectorProps) {
+  const total = rows.reduce((sum, row) => sum + row.projectCount, 0)
+
+  const data = rows.map((row) => ({
+    ...row,
+    name: row.sector,
+    value: row.projectCount,
+    share: total > 0 ? row.projectCount / total : 0,
+  }))
+
   return (
     <ChartCard
       title="Proyectos por sector"
-      hint="Clic en una barra para filtrar"
+      hint="Clic en un área para filtrar"
       height={PROJECT_CHART_HEIGHT}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart
-          data={rows}
-          layout="vertical"
-          margin={{ top: 4, right: 20, left: 8, bottom: 4 }}
+        <Treemap
+          data={data}
+          dataKey="value"
+          nameKey="sector"
+          stroke="#fff"
+          fill={CHART_PRIMARY}
+          animationDuration={200}
+          content={
+            <TreemapCell selected={selected} onSelect={onSelect} />
+          }
         >
-          <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
-          <XAxis type="number" allowDecimals={false} />
-          <YAxis
-            type="category"
-            dataKey="sector"
-            width={180}
-            interval={0}
-            tickFormatter={(value: string) => truncateLabel(value, 24)}
-          />
           <Tooltip
-            cursor={{ fill: CHART_CURSOR, opacity: 0.4 }}
             content={({ active, payload }) => {
               if (!active || !payload?.length) return null
-              const row = payload[0].payload as SectorProjectRow
+              const row = payload[0].payload as (typeof data)[number]
+              if (!row?.sector) return null
               return (
                 <div className="tooltip-custom">
                   <div className="tooltip-custom__titulo">{row.sector}</div>
-                  <div>Proyectos: <strong>{formatNumber(row.projectCount)}</strong></div>
+                  <div>Proyectos: <strong>{formatNumber(row.projectCount)}</strong> ({Math.round(row.share * 100)}%)</div>
                   <div>Inversión: <strong>{formatMmusd(row.investmentMmusd)}</strong></div>
                   <div>Empleo constr.: <strong>{formatNumber(row.constructionJobs)}</strong></div>
                 </div>
               )
             }}
           />
-          <Bar
-            dataKey="projectCount"
-            name="Proyectos"
-            radius={[0, 3, 3, 0]}
-            onClick={(event) => {
-              const row = pickChartRow<SectorProjectRow>(event, 'sector')
-              if (row) onSelect(row.sector)
-            }}
-            style={{ cursor: 'pointer' }}
-          >
-            {rows.map((row) => (
-              <Cell
-                key={row.sector}
-                fill={selected === row.sector ? CHART_SELECTED : CHART_PRIMARY}
-              />
-            ))}
-          </Bar>
-        </BarChart>
+        </Treemap>
       </ResponsiveContainer>
     </ChartCard>
+  )
+}
+
+interface TreemapCellProps {
+  x?: number
+  y?: number
+  width?: number
+  height?: number
+  index?: number
+  sector?: string
+  share?: number
+  selected?: string
+  onSelect?: (sector: string) => void
+}
+
+/**
+ * Custom cell renderer for the sector treemap.
+ *
+ * Recharts' Treemap has no built-in "percentage inside the box" label, and
+ * its default colouring is a rainbow unrelated to the institutional palette
+ * — this renders each rectangle in the same blue as the rest of the
+ * dashboard (darker for bigger sectors, so the size differences still read
+ * even on same-hue boxes), with the sector name and % printed inside when
+ * the box is big enough to hold them.
+ */
+function TreemapCell(props: TreemapCellProps) {
+  const { x = 0, y = 0, width = 0, height = 0, index = 0, sector, share = 0, selected, onSelect } = props
+  if (!sector) return null
+
+  const isSelected = selected === sector
+  // Darker blue for the largest boxes, lighter for the smallest — a subtle
+  // depth cue since every cell shares the same hue.
+  const opacity = Math.max(0.45, 1 - index * 0.09)
+  const fill = isSelected ? CHART_SELECTED : CHART_PRIMARY
+  const percentLabel = `${Math.round(share * 100)}%`
+  const canShowLabel = width > 56 && height > 34
+  const canShowPercent = width > 56 && height > 50
+
+  return (
+    <g
+      onClick={() => onSelect?.(sector)}
+      style={{ cursor: onSelect ? 'pointer' : undefined }}
+    >
+      <rect
+        x={x}
+        y={y}
+        width={width}
+        height={height}
+        fill={fill}
+        fillOpacity={isSelected ? 1 : opacity}
+        stroke="#fff"
+        strokeWidth={2}
+      />
+      {canShowLabel && (
+        <text
+          x={x + 8}
+          y={y + 18}
+          fontSize={12}
+          fontWeight={600}
+          fill="#fff"
+        >
+          {truncateLabel(sector, Math.max(8, Math.floor(width / 7)))}
+        </text>
+      )}
+      {canShowPercent && (
+        <text x={x + 8} y={y + 36} fontSize={16} fontWeight={700} fill="#fff">
+          {percentLabel}
+        </text>
+      )}
+    </g>
   )
 }
 
