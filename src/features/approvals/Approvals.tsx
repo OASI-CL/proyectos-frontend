@@ -2,6 +2,7 @@ import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../../hooks/useApi'
 import { useAuth } from '../../hooks/useAuth'
+import { useCatalogos, type Catalogos } from '../../hooks/useCatalogos'
 import { Contenido } from '../../components/Estados'
 import { api, mensajeError } from '../../lib/api'
 import { formatDateTime, formatText } from '../../lib/formatters'
@@ -38,7 +39,7 @@ const ETIQUETAS_CAMPO: Record<string, string> = {
   critico: 'Crítico',
   que_habilita: 'Qué habilita',
   habilitante_construccion: 'Habilitante construcción',
-  estado: 'Estado',
+  estado_id: 'Estado',
   fecha_ingreso: 'Fecha de ingreso',
   fecha_resolucion_estimada: 'Resolución estimada',
   fecha_resolucion: 'Fecha de resolución',
@@ -48,22 +49,40 @@ const ETIQUETAS_CAMPO: Record<string, string> = {
   n_catastro: 'N° de catastro',
   observaciones: 'Observaciones',
   titular: 'Titular',
-  region: 'Región',
-  sector: 'Sector',
+  region_id: 'Región',
+  sector_id: 'Sector',
   inversion_mmusd: 'Inversión (MMUSD)',
   empleo_construccion: 'Empleo construcción',
   empleo_operacion: 'Empleo operación',
   estado_ambiental: 'Estado ambiental',
-  etapa: 'Etapa',
+  etapa_id: 'Etapa',
   fecha_inicio_construccion: 'Inicio de construcción',
   fecha_inicio_operacion: 'Inicio de operación',
   observaciones_oasi: 'Observaciones OASI',
 }
 
-function valorLegible(valor: unknown): string {
+/**
+ * Campos que en la solicitud viajan como id de catálogo. Acá se traducen al
+ * nombre antes de mostrarlos: quien revisa tiene que leer "Metropolitana",
+ * no "7". La clave es el nombre de la lista dentro de /catalogos.
+ */
+const CAMPOS_CATALOGO: Record<string, 'estados' | 'regiones' | 'sectores' | 'etapas'> = {
+  estado_id: 'estados',
+  region_id: 'regiones',
+  sector_id: 'sectores',
+  etapa_id: 'etapas',
+}
+
+function valorLegible(campo: string, valor: unknown, catalogos?: Catalogos | null): string {
   if (valor === null || valor === undefined || valor === '') return '(vacío)'
   if (valor === true) return 'Sí'
   if (valor === false) return 'No'
+
+  const lista = CAMPOS_CATALOGO[campo]
+  if (lista && catalogos) {
+    const item = catalogos[lista].find((x) => x.id === Number(valor))
+    if (item) return item.nombre
+  }
   return String(valor)
 }
 
@@ -82,6 +101,8 @@ export function Approvals() {
   const [mensaje, setMensaje] = useState<{ tipo: 'ok' | 'error'; texto: string } | null>(null)
 
   const { datos, cargando, error, recargar } = useApi<SolicitudFila[]>(`/approvals?estado=${estado}`)
+  // Para traducir los *_id de `cambios` al nombre del catálogo.
+  const { datos: catalogos } = useCatalogos()
 
   async function revisar(id: number, accion: 'approve' | 'reject') {
     const comentario = window.prompt(
@@ -233,7 +254,7 @@ export function Approvals() {
                                 <td className="celda-principal">
                                   {ETIQUETAS_CAMPO[campo] ?? campo}
                                 </td>
-                                <td>{valorLegible(valor)}</td>
+                                <td>{valorLegible(campo, valor, catalogos)}</td>
                               </tr>
                             ))}
                           </tbody>

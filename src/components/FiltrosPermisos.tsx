@@ -70,7 +70,7 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
           >
             <option value="">Todos</option>
             {catalogos?.estados.map((e) => (
-              <option key={e} value={e}>{e}</option>
+              <option key={e.id} value={e.nombre}>{e.nombre}</option>
             ))}
           </select>
         </div>
@@ -100,7 +100,7 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
           >
             <option value="">Todas</option>
             {catalogos?.regiones.map((r) => (
-              <option key={r} value={r}>{r}</option>
+              <option key={r.id} value={r.nombre}>{r.nombre}</option>
             ))}
           </select>
         </div>
@@ -115,7 +115,7 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
           >
             <option value="">Todos</option>
             {catalogos?.sectores.map((s) => (
-              <option key={s} value={s}>{s}</option>
+              <option key={s.id} value={s.nombre}>{s.nombre}</option>
             ))}
           </select>
         </div>

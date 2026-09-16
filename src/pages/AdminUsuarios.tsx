@@ -16,6 +16,9 @@ interface FilaUsuario {
   empresaNombre: string | null
   organismoId: number | null
   organismoNombre: string | null
+  /** Alcance del rol 'region': el id es el que se guarda... */
+  regionId: number | null
+  /** ...y el nombre es el que se muestra (lo resuelve la vista v_usuarios). */
   region: string | null
 }
 
@@ -27,11 +30,12 @@ interface FormState {
   rol: RolUsuario
   empresaId: string
   organismoId: string
-  region: string
+  /** Id de la región del catálogo, como string porque viene de un <select>. */
+  regionId: string
 }
 
 const FORM_VACIO: FormState = {
-  nombre: '', email: '', rol: 'oasi', empresaId: '', organismoId: '', region: '',
+  nombre: '', email: '', rol: 'oasi', empresaId: '', organismoId: '', regionId: '',
 }
 
 /**
@@ -75,7 +79,7 @@ export function AdminUsuarios() {
       rol: u.rol,
       empresaId: u.empresaId ? String(u.empresaId) : '',
       organismoId: u.organismoId ? String(u.organismoId) : '',
-      region: u.region ?? '',
+      regionId: u.regionId ? String(u.regionId) : '',
     })
     setEditandoId(u.id)
     setMensaje(null)
@@ -97,7 +101,7 @@ export function AdminUsuarios() {
       rol: form.rol,
       empresa_id: form.rol === 'empresa' ? Number(form.empresaId) : undefined,
       organismo_id: form.rol === 'organismo' ? Number(form.organismoId) : undefined,
-      region: form.rol === 'region' ? form.region : undefined,
+      region_id: form.rol === 'region' ? Number(form.regionId) : undefined,
     }
 
     try {
@@ -246,12 +250,12 @@ export function AdminUsuarios() {
                     id="u-region"
                     className="select"
                     required
-                    value={form.region}
-                    onChange={(e) => cambiarCampo('region', e.target.value)}
+                    value={form.regionId}
+                    onChange={(e) => cambiarCampo('regionId', e.target.value)}
                   >
                     <option value="">Seleccionar…</option>
                     {catalogo?.regiones.map((r) => (
-                      <option key={r} value={r}>{r}</option>
+                      <option key={r.id} value={r.id}>{r.nombre}</option>
                     ))}
                   </select>
                 </div>

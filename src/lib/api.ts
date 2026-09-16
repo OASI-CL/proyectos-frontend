@@ -22,7 +22,8 @@ export interface RolDev {
   rol: RolUsuario
   empresaId?: number | null
   organismoId?: number | null
-  region?: string | null
+  /** Id de la región en el catálogo `regiones` (no el nombre). */
+  regionId?: number | null
 }
 
 export function leerRolDev(): RolDev {
@@ -55,9 +56,10 @@ api.interceptors.request.use(async (config) => {
   config.headers['x-dev-rol'] = dev.rol
   if (dev.empresaId) config.headers['x-dev-empresa-id'] = String(dev.empresaId)
   if (dev.organismoId) config.headers['x-dev-organismo-id'] = String(dev.organismoId)
-  // encodeURIComponent: header values must be latin-1, and region names carry
-  // accents ("Biobío", "O'Higgins"). The backend decodes it.
-  if (dev.region) config.headers['x-dev-region'] = encodeURIComponent(dev.region)
+  // The header carries the region ID, not its name: regions are a catalog
+  // table now, and an id needs no encoding (region names carry accents, which
+  // are not valid in a latin-1 header). The header name is unchanged.
+  if (dev.regionId) config.headers['x-dev-region'] = String(dev.regionId)
 
   return config
 })

@@ -14,7 +14,8 @@ export function PermisoNuevo() {
   const { datos: catalogos } = useCatalogos()
   const { datos: proyecto } = useApi<VProyecto>(`/proyectos/${id}`)
 
-  const [form, setForm] = useState<Record<string, string | boolean>>({ estado: 'Pendiente' })
+  // estado_id 1 = 'Pendiente' (id estable del catálogo estados_permiso).
+  const [form, setForm] = useState<Record<string, string | boolean>>({ estado_id: '1' })
   const [guardando, setGuardando] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
@@ -30,6 +31,7 @@ export function PermisoNuevo() {
       const { data } = await api.post(`/proyectos/${id}/permisos`, {
         ...form,
         organismo_id: form.organismo_id ? Number(form.organismo_id) : undefined,
+        estado_id: form.estado_id ? Number(form.estado_id) : undefined,
       })
       navigate(`/permisos/${data.id}`)
     } catch (err) {
@@ -134,12 +136,12 @@ export function PermisoNuevo() {
               <select
                 id="np-estado"
                 className="select"
-                value={String(form.estado ?? 'Pendiente')}
-                onChange={(e) => cambiar('estado', e.target.value)}
+                value={String(form.estado_id ?? '1')}
+                onChange={(e) => cambiar('estado_id', e.target.value)}
               >
-                <option value="Pendiente">Pendiente</option>
-                <option value="Resuelto">Resuelto</option>
-                <option value="Descartado">Descartado</option>
+                {catalogos?.estados.map((e) => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                ))}
               </select>
             </div>
 

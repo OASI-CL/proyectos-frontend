@@ -9,6 +9,9 @@ export interface UsuarioActual {
   rol: RolUsuario
   empresaId: number | null
   organismoId: number | null
+  /** Alcance del rol 'region': el id del catálogo `regiones`. */
+  regionId: number | null
+  /** El mismo alcance resuelto a nombre, solo para mostrar. */
   region: string | null
 }
 

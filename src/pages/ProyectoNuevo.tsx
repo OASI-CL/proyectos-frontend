@@ -23,9 +23,15 @@ export function ProyectoNuevo() {
     setGuardando(true)
     setError(null)
     try {
+      // region/sector/etapa se mandan como id de catálogo: en la base son
+      // FKs (proyectos.region_id, ...), no texto. Los <select> de abajo ya
+      // llevan el id en el value.
       const { data } = await api.post('/proyectos', {
         ...form,
         empresa_id: form.empresa_id ? Number(form.empresa_id) : undefined,
+        region_id: form.region_id ? Number(form.region_id) : null,
+        sector_id: form.sector_id ? Number(form.sector_id) : null,
+        etapa_id: form.etapa_id ? Number(form.etapa_id) : null,
         inversion_mmusd: form.inversion_mmusd ? Number(form.inversion_mmusd) : null,
         empleo_construccion: form.empleo_construccion ? Number(form.empleo_construccion) : null,
         empleo_operacion: form.empleo_operacion ? Number(form.empleo_operacion) : null,
@@ -127,11 +133,13 @@ export function ProyectoNuevo() {
               <select
                 id="n-sector"
                 className="select"
-                value={form.sector ?? ''}
-                onChange={(e) => cambiar('sector', e.target.value)}
+                value={form.sector_id ?? ''}
+                onChange={(e) => cambiar('sector_id', e.target.value)}
               >
                 <option value="">Sin definir</option>
-                {catalogos?.sectores.map((s) => <option key={s} value={s}>{s}</option>)}
+                {catalogos?.sectores.map((s) => (
+                  <option key={s.id} value={s.id}>{s.nombre}</option>
+                ))}
               </select>
             </div>
 
@@ -140,11 +148,13 @@ export function ProyectoNuevo() {
               <select
                 id="n-region"
                 className="select"
-                value={form.region ?? ''}
-                onChange={(e) => cambiar('region', e.target.value)}
+                value={form.region_id ?? ''}
+                onChange={(e) => cambiar('region_id', e.target.value)}
               >
                 <option value="">Sin definir</option>
-                {catalogos?.regiones.map((r) => <option key={r} value={r}>{r}</option>)}
+                {catalogos?.regiones.map((r) => (
+                  <option key={r.id} value={r.id}>{r.nombre}</option>
+                ))}
               </select>
             </div>
 
@@ -153,11 +163,13 @@ export function ProyectoNuevo() {
               <select
                 id="n-etapa"
                 className="select"
-                value={form.etapa ?? ''}
-                onChange={(e) => cambiar('etapa', e.target.value)}
+                value={form.etapa_id ?? ''}
+                onChange={(e) => cambiar('etapa_id', e.target.value)}
               >
                 <option value="">Sin definir</option>
-                {catalogos?.etapas.map((e) => <option key={e} value={e}>{e}</option>)}
+                {catalogos?.etapas.map((e) => (
+                  <option key={e.id} value={e.id}>{e.nombre}</option>
+                ))}
               </select>
             </div>
 

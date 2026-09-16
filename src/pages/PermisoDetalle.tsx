@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { Link, useParams } from 'react-router-dom'
 import { useApi } from '../hooks/useApi'
 import { useAuth } from '../hooks/useAuth'
+import { useCatalogos } from '../hooks/useCatalogos'
 import { Contenido } from '../components/Estados'
 import { SemaforoBadge, EstadoBadge, IdExcel } from '../components/SemaforoBadge'
 import { HistorialLista } from '../components/HistorialLista'
@@ -26,6 +27,7 @@ export function PermisoDetalle() {
   const { id } = useParams()
   const { puedeEditar } = useAuth()
   const { datos: permiso, cargando, error, recargar } = useApi<VPermiso>(`/permisos/${id}`)
+  const { datos: catalogos } = useCatalogos()
 
   const [editando, setEditando] = useState(false)
   const [pestania, setPestania] = useState<Pestania>('datos')
@@ -38,7 +40,10 @@ export function PermisoDetalle() {
     if (permiso) {
       setForm({
         nombre: permiso.nombre,
-        estado: permiso.estado,
+        // El estado se edita por id: en la base es una FK al catálogo
+        // estados_permiso, no texto. La vista igual devuelve el nombre para
+        // mostrarlo (permiso.estado).
+        estado_id: permiso.estado_id,
         fecha_ingreso: fechaInput(permiso.fecha_ingreso),
         fecha_resolucion_estimada: fechaInput(permiso.fecha_resolucion_estimada),
         fecha_resolucion: fechaInput(permiso.fecha_resolucion),
@@ -196,12 +201,12 @@ export function PermisoDetalle() {
                       <select
                         id="e-estado"
                         className="select"
-                        value={String(form.estado ?? '')}
-                        onChange={(e) => cambiar('estado', e.target.value)}
+                        value={String(form.estado_id ?? '')}
+                        onChange={(e) => cambiar('estado_id', Number(e.target.value))}
                       >
-                        <option value="Pendiente">Pendiente</option>
-                        <option value="Resuelto">Resuelto</option>
-                        <option value="Descartado">Descartado</option>
+                        {catalogos?.estados.map((e) => (
+                          <option key={e.id} value={e.id}>{e.nombre}</option>
+                        ))}
                       </select>
                     </div>
 

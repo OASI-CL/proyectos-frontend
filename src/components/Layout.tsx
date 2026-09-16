@@ -20,13 +20,14 @@ function SelectorRolDev() {
 
   function alCambiar(rol: RolUsuario) {
     // Example scope so the filtering is visible while testing: company 1
-    // (BHP), agency 5 (DGA), region Antofagasta. With Cognito this comes from
-    // the usuarios table instead.
+    // (BHP), agency 5 (DGA), region 3 (Antofagasta — regions are a catalog
+    // table now, so the scope is its id). With Cognito this comes from the
+    // usuarios table instead.
     cambiarRolDev({
       rol,
       empresaId: rol === 'empresa' ? 1 : null,
       organismoId: rol === 'organismo' ? 5 : null,
-      region: rol === 'region' ? 'Antofagasta' : null,
+      regionId: rol === 'region' ? 3 : null,
     })
   }
 
