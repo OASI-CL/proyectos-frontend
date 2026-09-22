@@ -169,10 +169,18 @@ Las dos sirven en `http://localhost:5173`.
 login reales de dev **antes** de subirlo. `.env.aws` no se versiona; lleva:
 
 ```
-VITE_API_URL=https://28kggtg009.execute-api.us-east-1.amazonaws.com/dev
+VITE_API_URL=<URL del HTTP API de dev, sin barra al final>
 VITE_COGNITO_USER_POOL_ID=us-east-1_WDLIW3Jby
 VITE_COGNITO_CLIENT_ID=46cb3he4cbplji8chmj066vud6
 VITE_COGNITO_REGION=us-east-1
+```
+
+La URL de la API sale de lo que está desplegado:
+
+```bash
+cd ../proyectos-backend
+aws cloudformation describe-stacks --stack-name Oasi-Api-dev \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text
 ```
 
 (Funciona porque la API de dev acepta `http://localhost:5173`; la de prod no.)
@@ -309,10 +317,10 @@ pull request `develop → main` → merge → Amplify publica prod.
 - `.github/workflows/ci.yml` corre lint + typecheck + build en cada pull
   request, cosa que Amplify no hace.
 - La URL de cada rama tiene que estar en `frontendOrigins` del ambiente en
-  `proyectos-backend/infra/lib/config.ts`, o la API la rechaza (CORS).
+  `proyectos-backend/infra/config.ts`, o la API la rechaza (CORS).
 
 Instrucciones completas (primera configuración, GitHub, costos, operación):
-`proyectos-backend/DEPLOYMENT.md`.
+[`proyectos-backend/infra/README.md`](https://github.com/OASI-CL/proyectos-backend/blob/develop/infra/README.md).
 
 ---
 
