@@ -26,9 +26,9 @@ export const PERMIT_STATUS_LABELS: Record<PermitTrackingStatus, string> = {
 // was the border on the shapes, not the fill, so that's what got removed
 // (see `statusBars` and the donut's Cell below), not the colour.
 export const PERMIT_STATUS_FILL: Record<PermitTrackingStatus, string> = {
-  pending: '#FFF5CC',
-  overdue: '#F5CCCC',
-  resolved: '#CCEBD6',
+  pending: '#FFE38C',
+  overdue: '#F0A8A8',
+  resolved: '#9FDBB8',
 }
 
 export const PERMIT_STATUS_STROKE: Record<PermitTrackingStatus, string> = {
