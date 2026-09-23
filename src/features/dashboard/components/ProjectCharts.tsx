@@ -161,10 +161,9 @@ function buildSectorColors(sectors: string[]): Map<string, string> {
  * Custom cell renderer for the sector treemap: solid colour per sector,
  * sector name and % inside when the box is big enough.
  *
- * The label gets a soft drop-shadow (CSS `filter`, not an SVG stroke) so it
- * reads on any fill colour. An SVG `stroke` outline around thin text renders
- * as jagged/pixelated at these font sizes — the shadow doesn't have that
- * problem and looks softer besides.
+ * Plain white text, no shadow/outline/filter — every sector colour in the
+ * palette is dark enough for it to read cleanly on its own; anything added
+ * on top (a stroke, a drop-shadow) just blurred it.
  */
 function TreemapCell(props: TreemapCellProps) {
   const { x = 0, y = 0, width = 0, height = 0, sector, share = 0, selected, onSelect, colors } = props
@@ -175,9 +174,6 @@ function TreemapCell(props: TreemapCellProps) {
   const percentLabel = `${Math.round(share * 100)}%`
   const canShowLabel = width > 56 && height > 34
   const canShowPercent = width > 56 && height > 50
-  const textStyle = {
-    filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.75))',
-  }
 
   return (
     <g
@@ -195,12 +191,12 @@ function TreemapCell(props: TreemapCellProps) {
         strokeWidth={isSelected ? 4 : 2}
       />
       {canShowLabel && (
-        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={600} fill="#fff" style={textStyle}>
+        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={600} fill="#fff">
           {truncateLabel(sector, Math.max(8, Math.floor(width / 7.5)))}
         </text>
       )}
       {canShowPercent && (
-        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={700} fill="#fff" style={textStyle}>
+        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={600} fill="#fff">
           {percentLabel}
         </text>
       )}
