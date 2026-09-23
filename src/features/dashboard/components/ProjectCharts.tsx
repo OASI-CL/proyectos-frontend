@@ -205,12 +205,12 @@ function TreemapCell(props: TreemapCellProps) {
         strokeWidth={isSelected ? 4 : 2}
       />
       {canShowLabel && (
-        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={400} fill="#fff">
+        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={150} fill="#fff">
           {truncateLabel(sector, Math.max(8, Math.floor(width / 7.5)))}
         </text>
       )}
       {canShowPercent && (
-        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={700} fill="#fff">
+        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={150} fill="#fff">
           {percentLabel}
         </text>
       )}
