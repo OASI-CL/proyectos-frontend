@@ -75,6 +75,7 @@ export function MonitorProjectsBanner({ upcoming, fewPermits }: Props) {
                 </div>
               </dl>
               <div className="monitor-card__toggle">
+                <span className="monitor-card__toggle-flecha">{openBucket === key ? '▲' : '▼'}</span>
                 {openBucket === key ? 'Ocultar proyectos' : 'Ver proyectos'}
               </div>
             </button>

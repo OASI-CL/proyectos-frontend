@@ -87,6 +87,16 @@ export function Permisos() {
       render: (p) => <EstadoBadge valor={p.estado} />,
     },
     {
+      clave: 'habilitante_construccion',
+      titulo: 'Habilitante',
+      render: (p) =>
+        p.habilitante_construccion ? (
+          <span className="badge badge--info">Sí</span>
+        ) : (
+          <span className="texto-tenue">No</span>
+        ),
+    },
+    {
       clave: 'fecha_ingreso',
       titulo: 'Ingreso',
       ordenable: true,

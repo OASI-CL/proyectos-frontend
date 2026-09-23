@@ -160,9 +160,10 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
               <span
                 style={{
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  minWidth: 16, height: 16, padding: n > 1 ? '0 4px' : 0, margin: '0 auto',
-                  borderRadius: 8, background: COLOR_ESTADO[estado] ?? '#1F9BB0',
-                  border: '1.5px solid #1F4E79', color: '#fff', fontSize: 10, fontWeight: 700,
+                  width: n > 1 ? 22 : 14, height: n > 1 ? 22 : 14, margin: '0 auto',
+                  borderRadius: '50%', background: COLOR_ESTADO[estado] ?? '#1F9BB0',
+                  boxShadow: '0 0 0 2px #fff, 0 1px 3px rgba(20, 30, 60, 0.35)',
+                  color: '#fff', fontSize: 10, fontWeight: 700,
                 }}
               >
                 {n > 1 ? n : ''}

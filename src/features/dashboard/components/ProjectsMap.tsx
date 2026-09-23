@@ -2,9 +2,9 @@ import 'leaflet/dist/leaflet.css'
 import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { CircleMarker, MapContainer, TileLayer, Tooltip as MapTooltip } from 'react-leaflet'
-import { Bar, BarChart, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
+import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { pickChartRow, truncateLabel } from './chartEvents'
-import { SECTOR_NONE_COLOR, sectorColor } from '../constants'
+import { CHART_GRID, SECTOR_NONE_COLOR, sectorColor } from '../constants'
 import { formatMmusd, formatNumber, formatText } from '../../../lib/formatters'
 import type { MapProject, SectorProjectRow } from '../types'
 
@@ -96,7 +96,8 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
             <div className="mapa-sector__titulo">Inversión por sector (MMUSD)</div>
             <div style={{ height: 380 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 8 }}>
+                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 8 }} barCategoryGap="22%">
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
                   <XAxis
                     dataKey="sector"
                     interval={0}
@@ -123,6 +124,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
                   />
                   <Bar
                     dataKey="investmentMmusd"
+                    maxBarSize={56}
                     style={{ cursor: 'pointer' }}
                     onClick={(event) => {
                       const row = pickChartRow<SectorProjectRow>(event, 'sector')

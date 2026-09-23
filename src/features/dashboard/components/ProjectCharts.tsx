@@ -32,7 +32,7 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
       height={PROJECT_CHART_HEIGHT}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }}>
+        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }} barCategoryGap="22%">
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
           <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} />
           <YAxis allowDecimals={false} />
@@ -56,6 +56,7 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
             dataKey="projectCount"
             name="Proyectos"
             radius={[3, 3, 0, 0]}
+            maxBarSize={56}
             onClick={(event) => {
               const row = pickChartRow<RegionProjectRow>(event, 'region')
               if (row) onSelect(row.region)
