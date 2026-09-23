@@ -301,6 +301,11 @@ a:hover { text-decoration: underline; }
 .panel__cuerpo { padding: 18px; }
 .panel__cuerpo--sin-padding { padding: 0; }
 
+/* Charts (ChartCard): stretched panels fill instead of leaving a blank gap
+   at the bottom — see the comment on ChartCard for why this exists. */
+.panel--grafico { display: flex; flex-direction: column; }
+.panel--grafico .panel__cuerpo { flex: 1; display: flex; flex-direction: column; }
+
 /* --- Tarjetas KPI --- */
 .kpis {
   display: grid;

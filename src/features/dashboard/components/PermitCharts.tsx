@@ -162,7 +162,7 @@ export function PermitStatusDonut({ rows, selected, onSelect }: DonutProps) {
     <ChartCard
       title="Distribución por estado"
       hint="Clic en un segmento para filtrar"
-      height={320}
+      height={340}
     >
       {total === 0 ? (
         <div className="estado-caja">
