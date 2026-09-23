@@ -9,7 +9,7 @@ const CLASES_SEMAFORO: Record<string, string> = {
 }
 
 /**
- * Semáforo del permiso: En plazo (<3m), En alerta (3-6m), Crítico (>6m),
+ * Semáforo del permiso: En plazo (<3m), En alerta (3-6m), Atrasado (>6m),
  * Finalizado (resuelto o descartado). El valor lo calcula la vista
  * v_permisos en la base, acá solo se pinta.
  */
@@ -28,6 +28,7 @@ const CLASES_ESTADO: Record<string, string> = {
   Pendiente: 'badge--pendiente',
   Resuelto: 'badge--resuelto',
   Descartado: 'badge--descartado',
+  Desistido: 'badge--descartado',
 }
 
 export function EstadoBadge({ valor }: { valor: EstadoPermiso | string | null }) {

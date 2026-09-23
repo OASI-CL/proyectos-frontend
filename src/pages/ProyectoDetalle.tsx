@@ -5,6 +5,7 @@ import { Contenido } from '../components/Estados'
 import { TablaFiltrable, type Columna } from '../components/TablaFiltrable'
 import { SemaforoBadge, EstadoBadge, IdExcel } from '../components/SemaforoBadge'
 import { IconoVolver, IconoMas } from '../components/Iconos'
+import { LineaTiempoProyecto } from '../components/LineaTiempoProyecto'
 import { fecha, numero, texto, mmusd } from '../lib/format'
 import type { VPermiso, VProyecto } from '../shared/types'
 
@@ -121,6 +122,15 @@ export function ProyectoDetalle() {
             <div className="kpi kpi--neutro">
               <div className="kpi__etiqueta">Inversión</div>
               <div className="kpi__valor" style={{ fontSize: 22 }}>{mmusd(p.inversion_mmusd)}</div>
+            </div>
+          </div>
+
+          <div className="panel">
+            <div className="panel__header">
+              <h2>Línea de tiempo</h2>
+            </div>
+            <div className="panel__cuerpo" style={{ overflowX: 'auto' }}>
+              <LineaTiempoProyecto proyecto={p} permisos={permisos.datos ?? []} />
             </div>
           </div>
 

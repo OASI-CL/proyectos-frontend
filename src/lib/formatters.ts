@@ -88,7 +88,8 @@ export function formatText(value: string | null | undefined): string {
 export const SEMAFORO_LABELS: Record<string, string> = {
   en_plazo: 'En plazo',
   en_alerta: 'En alerta',
-  critico: 'Crítico',
+  // The DB key stays 'critico'; only the label changed (OASI asked for "Atrasado").
+  critico: 'Atrasado',
   finalizado: 'Finalizado',
 }
 
