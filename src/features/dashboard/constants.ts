@@ -19,25 +19,29 @@ export const PERMIT_STATUS_LABELS: Record<PermitTrackingStatus, string> = {
   resolved: 'Resuelto',
 }
 
-// Solid, saturated pastel — not the near-white tint these used to be, which
-// read as "transparent" next to the sector palette's solid colours.
+// The institutional pastel palette (same tokens as the badges: --amarillo-palido,
+// --rojo-palido, --verde-palido in index.css). A previous pass tried a more
+// saturated, solid-looking version of these and it came out an ugly duck
+// yellow — pastel is the one that was asked for; what looked "faded" before
+// was the border on the shapes, not the fill, so that's what got removed
+// (see `statusBars` and the donut's Cell below), not the colour.
 export const PERMIT_STATUS_FILL: Record<PermitTrackingStatus, string> = {
-  pending: '#FFC93C',
-  overdue: '#E8555A',
-  resolved: '#3FB878',
+  pending: '#FFF5CC',
+  overdue: '#F5CCCC',
+  resolved: '#CCEBD6',
 }
 
 export const PERMIT_STATUS_STROKE: Record<PermitTrackingStatus, string> = {
-  pending: '#B87F00',
-  overdue: '#A61E22',
-  resolved: '#1E7A47',
+  pending: '#E0B400',
+  overdue: '#CC0000',
+  resolved: '#009933',
 }
 
-/** Readable text colour on top of each solid fill (white, not a darker tint). */
+/** Readable text colour on top of each pastel fill. */
 export const PERMIT_STATUS_TEXT: Record<PermitTrackingStatus, string> = {
-  pending: '#5C4400',
-  overdue: '#FFFFFF',
-  resolved: '#FFFFFF',
+  pending: '#7A5C00',
+  overdue: '#8A1A1A',
+  resolved: '#0A6B2A',
 }
 
 // --- RCA status ---------------------------------------------------------------

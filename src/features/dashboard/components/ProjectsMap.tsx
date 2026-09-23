@@ -96,16 +96,16 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
             <div className="mapa-sector__titulo">Inversión por sector (MMUSD)</div>
             <div style={{ height: 380 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 8 }} barCategoryGap="22%">
+                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 40 }} barCategoryGap="12%">
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
                   <XAxis
                     dataKey="sector"
                     interval={0}
-                    angle={-90}
+                    angle={-38}
                     textAnchor="end"
-                    height={130}
+                    height={70}
                     tick={{ fontSize: 11 }}
-                    tickFormatter={(v: string) => truncateLabel(v, 20)}
+                    tickFormatter={(v: string) => truncateLabel(v, 16)}
                   />
                   <YAxis tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))} width={40} />
                   <Tooltip
@@ -124,7 +124,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
                   />
                   <Bar
                     dataKey="investmentMmusd"
-                    maxBarSize={56}
+                    maxBarSize={72}
                     style={{ cursor: 'pointer' }}
                     onClick={(event) => {
                       const row = pickChartRow<SectorProjectRow>(event, 'sector')

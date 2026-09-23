@@ -57,8 +57,6 @@ function statusBars<T extends object>(
       name={PERMIT_STATUS_LABELS[status]}
       stackId="permits"
       fill={PERMIT_STATUS_FILL[status]}
-      stroke={PERMIT_STATUS_STROKE[status]}
-      strokeWidth={1}
       onClick={(event) => {
         const row = pickChartRow<T>(event, rowKey)
         if (row) onRowClick(row)
@@ -184,8 +182,8 @@ export function PermitStatusDonut({ rows, selected, onSelect }: DonutProps) {
                 <Cell
                   key={row.status}
                   fill={PERMIT_STATUS_FILL[row.status]}
-                  stroke={PERMIT_STATUS_STROKE[row.status]}
-                  strokeWidth={selected === row.status ? 3 : 1}
+                  stroke={selected === row.status ? PERMIT_STATUS_STROKE[row.status] : undefined}
+                  strokeWidth={selected === row.status ? 3 : 0}
                 />
               ))}
             </Pie>
