@@ -6,7 +6,7 @@ import {
 } from 'recharts'
 import { ChartCard } from './ChartCard'
 import { pickChartRow } from './chartEvents'
-import { CHART_GRID, PROJECT_STATUS_FILL, RCA_STATUS_LABELS } from '../constants'
+import { AXIS_TICK, CHART_GRID, PROJECT_STATUS_FILL, RCA_STATUS_LABELS } from '../constants'
 import { formatDate, formatMmusd, formatNumber, formatText } from '../../../lib/formatters'
 import type { TimelineProject } from '../types'
 
@@ -148,6 +148,7 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
             allowDataOverflow
             scale="time"
             ticks={yearTicks}
+            tick={AXIS_TICK}
             tickFormatter={(value: number) => String(new Date(value).getFullYear())}
           />
           {/* allowDuplicatedCategory={false}: without it recharts pairs the
@@ -158,6 +159,7 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
             dataKey="y"
             width={160}
             interval={0}
+            tick={AXIS_TICK}
             allowDuplicatedCategory={false}
           />
           <ZAxis type="number" dataKey="z" range={[60, 520]} />

@@ -5,7 +5,7 @@ import {
 import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import {
-  CHART_CURSOR, CHART_GRID, CHART_PRIMARY, CHART_SELECTED,
+  AXIS_TICK, CHART_CURSOR, CHART_GRID, CHART_PRIMARY, CHART_SELECTED,
   RCA_STATUS_FILL, RCA_STATUS_LABELS, RCA_STATUS_STROKE, sectorColor,
 } from '../constants'
 import { formatMmusd, formatNumber } from '../../../lib/formatters'
@@ -32,10 +32,10 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
       height={PROJECT_CHART_HEIGHT}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }} barCategoryGap="12%">
+        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }} barCategoryGap="6%">
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
-          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} />
-          <YAxis allowDecimals={false} />
+          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} tick={AXIS_TICK} />
+          <YAxis allowDecimals={false} tick={AXIS_TICK} />
           <Tooltip
             cursor={{ fill: CHART_CURSOR, opacity: 0.4 }}
             content={({ active, payload }) => {
@@ -55,8 +55,6 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
           <Bar
             dataKey="projectCount"
             name="Proyectos"
-            radius={[3, 3, 0, 0]}
-            maxBarSize={72}
             onClick={(event) => {
               const row = pickChartRow<RegionProjectRow>(event, 'region')
               if (row) onSelect(row.region)
@@ -163,9 +161,10 @@ function buildSectorColors(sectors: string[]): Map<string, string> {
  * Custom cell renderer for the sector treemap: solid colour per sector,
  * sector name and % inside when the box is big enough.
  *
- * Text is drawn without opacity and with a thin dark halo
- * (`paintOrder: stroke`). The previous semi-transparent fills blurred the
- * white labels.
+ * The label gets a soft drop-shadow (CSS `filter`, not an SVG stroke) so it
+ * reads on any fill colour. An SVG `stroke` outline around thin text renders
+ * as jagged/pixelated at these font sizes — the shadow doesn't have that
+ * problem and looks softer besides.
  */
 function TreemapCell(props: TreemapCellProps) {
   const { x = 0, y = 0, width = 0, height = 0, sector, share = 0, selected, onSelect, colors } = props
@@ -177,10 +176,7 @@ function TreemapCell(props: TreemapCellProps) {
   const canShowLabel = width > 56 && height > 34
   const canShowPercent = width > 56 && height > 50
   const textStyle = {
-    paintOrder: 'stroke' as const,
-    stroke: 'rgba(0,0,0,0.35)',
-    strokeWidth: 2,
-    textRendering: 'geometricPrecision' as const,
+    filter: 'drop-shadow(0 1px 1.5px rgba(0,0,0,0.75))',
   }
 
   return (

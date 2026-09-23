@@ -5,7 +5,7 @@ import {
 import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import {
-  CHART_CURSOR, CHART_GRID,
+  AXIS_TICK, CHART_CURSOR, CHART_GRID,
   PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, PERMIT_STATUS_STROKE,
 } from '../constants'
 import { formatNumber } from '../../../lib/formatters'
@@ -83,14 +83,20 @@ export function PermitsByAgencyChart({ rows, onSelectAgency }: AgencyProps) {
       height={Math.max(300, rows.length * 30)}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
+        <BarChart
+          data={rows}
+          layout="vertical"
+          margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+          barCategoryGap="6%"
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
-          <XAxis type="number" allowDecimals={false} />
+          <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} />
           <YAxis
             type="category"
             dataKey="agency"
             width={170}
             interval={0}
+            tick={AXIS_TICK}
             tickFormatter={(value: string) => truncateLabel(value, 22)}
           />
           <Tooltip cursor={{ fill: CHART_CURSOR, opacity: 0.4 }} content={<StatusBreakdownTooltip />} />
@@ -119,10 +125,10 @@ export function PermitsByRegionChart({ rows, onSelectRegion }: RegionProps) {
       height={340}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }}>
+        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }} barCategoryGap="6%">
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
-          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} />
-          <YAxis allowDecimals={false} />
+          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} tick={AXIS_TICK} />
+          <YAxis allowDecimals={false} tick={AXIS_TICK} />
           <Tooltip cursor={{ fill: CHART_CURSOR, opacity: 0.4 }} content={<StatusBreakdownTooltip />} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           {statusBars<RegionPermitRow>('region', (row) => onSelectRegion(row.region))}

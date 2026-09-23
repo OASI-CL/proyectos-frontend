@@ -19,29 +19,26 @@ export const PERMIT_STATUS_LABELS: Record<PermitTrackingStatus, string> = {
   resolved: 'Resuelto',
 }
 
-// The institutional pastel palette (same tokens as the badges: --amarillo-palido,
-// --rojo-palido, --verde-palido in index.css). A previous pass tried a more
-// saturated, solid-looking version of these and it came out an ugly duck
-// yellow — pastel is the one that was asked for; what looked "faded" before
-// was the border on the shapes, not the fill, so that's what got removed
-// (see `statusBars` and the donut's Cell below), not the colour.
+// Strong, solid colours — went back and forth with pastel a couple of times;
+// this is the one that stuck. No border on the shapes (see `statusBars` and
+// the donut's Cell below): the "seleccionado" outline is the only border.
 export const PERMIT_STATUS_FILL: Record<PermitTrackingStatus, string> = {
-  pending: '#FFE38C',
-  overdue: '#F0A8A8',
-  resolved: '#9FDBB8',
+  pending: '#FFC93C',
+  overdue: '#E8555A',
+  resolved: '#3FB878',
 }
 
 export const PERMIT_STATUS_STROKE: Record<PermitTrackingStatus, string> = {
-  pending: '#E0B400',
-  overdue: '#CC0000',
-  resolved: '#009933',
+  pending: '#B87F00',
+  overdue: '#A61E22',
+  resolved: '#1E7A47',
 }
 
-/** Readable text colour on top of each pastel fill. */
+/** Readable text colour on top of each solid fill. */
 export const PERMIT_STATUS_TEXT: Record<PermitTrackingStatus, string> = {
-  pending: '#7A5C00',
-  overdue: '#8A1A1A',
-  resolved: '#0A6B2A',
+  pending: '#5C4400',
+  overdue: '#FFFFFF',
+  resolved: '#FFFFFF',
 }
 
 // --- RCA status ---------------------------------------------------------------
@@ -126,6 +123,16 @@ export function sectorColor(sector: string | null | undefined): string {
   for (const ch of sector) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
   return SECTOR_FALLBACK[hash % SECTOR_FALLBACK.length]
 }
+
+/**
+ * Same tick label on every chart's axis (size, family, colour) — pass to
+ * every `<XAxis tick={AXIS_TICK} />` / `<YAxis tick={AXIS_TICK} />`. Relying
+ * on the `.recharts-cartesian-axis-tick text` CSS rule alone left a couple
+ * of axes inheriting a different size when a chart set its own `tick` prop
+ * with a slightly different value; passing the same object everywhere
+ * removes the discrepancy instead of hoping the cascade lines up.
+ */
+export const AXIS_TICK = { fontSize: 11, fontFamily: 'inherit', fill: '#646464' }
 
 /** Chart palette for neutral categorical series (region, sector). */
 export const CHART_PRIMARY = '#006BB9'

@@ -4,7 +4,7 @@ import { useNavigate } from 'react-router-dom'
 import { CircleMarker, MapContainer, TileLayer, Tooltip as MapTooltip } from 'react-leaflet'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { pickChartRow, truncateLabel } from './chartEvents'
-import { CHART_GRID, SECTOR_NONE_COLOR, sectorColor } from '../constants'
+import { AXIS_TICK, CHART_GRID, SECTOR_NONE_COLOR, sectorColor } from '../constants'
 import { formatMmusd, formatNumber, formatText } from '../../../lib/formatters'
 import type { MapProject, SectorProjectRow } from '../types'
 
@@ -96,7 +96,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
             <div className="mapa-sector__titulo">Inversión por sector (MMUSD)</div>
             <div style={{ height: 380 }}>
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 40 }} barCategoryGap="12%">
+                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 40 }} barCategoryGap="6%">
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
                   <XAxis
                     dataKey="sector"
@@ -104,10 +104,14 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
                     angle={-38}
                     textAnchor="end"
                     height={70}
-                    tick={{ fontSize: 11 }}
+                    tick={AXIS_TICK}
                     tickFormatter={(v: string) => truncateLabel(v, 16)}
                   />
-                  <YAxis tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))} width={40} />
+                  <YAxis
+                    tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
+                    width={40}
+                    tick={AXIS_TICK}
+                  />
                   <Tooltip
                     cursor={{ fill: '#EEF2F8' }}
                     content={({ active, payload }) => {
@@ -124,7 +128,6 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
                   />
                   <Bar
                     dataKey="investmentMmusd"
-                    maxBarSize={72}
                     style={{ cursor: 'pointer' }}
                     onClick={(event) => {
                       const row = pickChartRow<SectorProjectRow>(event, 'sector')
