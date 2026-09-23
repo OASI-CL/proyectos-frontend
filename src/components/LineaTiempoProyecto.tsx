@@ -1,5 +1,7 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { fecha } from '../lib/format'
+import { EstadoBadge, IdExcel } from './SemaforoBadge'
 import type { VPermiso, VProyecto } from '../shared/types'
 
 /**
@@ -64,6 +66,7 @@ const EJE_Y = 140
 export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyecto; permisos: VPermiso[] }) {
   const navigate = useNavigate()
   const lista = hitos(proyecto)
+  const [grupoAbierto, setGrupoAbierto] = useState<string | null>(null)
 
   const habilitantes = permisos.filter((x) => x.habilitante_construccion)
 
@@ -132,6 +135,7 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
 
         {/* Permisos habilitantes */}
         {grupos.map((g, i) => {
+          const clave = g.fecha ?? 'sin-fecha'
           const left = grupos.length === 1 ? (desde + hasta) / 2 : desde + paso * i
           // Alternate heights so neighbouring date labels don't overlap.
           const top = i % 2 === 0 ? 62 : 92
@@ -139,18 +143,19 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
           const unico = n === 1 ? g.permisos[0] : null
           // A group's colour: pending wins, so an open permit is never hidden behind a resolved one.
           const estado = g.permisos.some((x) => x.estado === 'Pendiente') ? 'Pendiente' : g.permisos[0].estado
-          const detalle = g.permisos
-            .slice(0, 12)
-            .map((x) => `• ${x.nombre} (${x.estado})`)
-            .join('\n')
+          const abierto = grupoAbierto === clave
           return (
             <button
-              key={g.fecha ?? 'sin-fecha'}
+              key={clave}
               type="button"
               onClick={() =>
-                navigate(unico ? `/permisos/${unico.id}` : `/permisos?proyecto_id=${proyecto.id}&habilitante=true`)
+                unico ? navigate(`/permisos/${unico.id}`) : setGrupoAbierto(abierto ? null : clave)
               }
-              title={`Ingreso: ${fecha(g.fecha)} · ${n} permiso(s)\n${detalle}${n > 12 ? `\n… y ${n - 12} más` : ''}`}
+              title={
+                unico
+                  ? unico.nombre
+                  : `Ingreso: ${fecha(g.fecha)} · ${n} permiso(s). Clic para ver la lista`
+              }
               style={{
                 position: 'absolute', left: `${left}%`, top,
                 transform: 'translateX(-50%)', background: 'none', border: 0,
@@ -162,11 +167,13 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
                   display: 'flex', alignItems: 'center', justifyContent: 'center',
                   width: n > 1 ? 22 : 14, height: n > 1 ? 22 : 14, margin: '0 auto',
                   borderRadius: '50%', background: COLOR_ESTADO[estado] ?? '#1F9BB0',
-                  boxShadow: '0 0 0 2px #fff, 0 1px 3px rgba(20, 30, 60, 0.35)',
+                  boxShadow: abierto
+                    ? '0 0 0 2px #fff, 0 0 0 4px #1F4E79'
+                    : '0 0 0 2px #fff, 0 1px 3px rgba(20, 30, 60, 0.35)',
                   color: '#fff', fontSize: 10, fontWeight: 700,
                 }}
               >
-                {n > 1 ? n : ''}
+                {n}
               </span>
               <span style={{ display: 'block', fontSize: 11, color: '#555', whiteSpace: 'nowrap', marginTop: 2 }}>
                 {g.fecha ? fecha(g.fecha) : 'sin fecha'}
@@ -176,14 +183,22 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
         })}
       </div>
 
+      {grupoAbierto && (
+        <GrupoDesplegado
+          grupo={grupos.find((g) => (g.fecha ?? 'sin-fecha') === grupoAbierto)!}
+          onClose={() => setGrupoAbierto(null)}
+          onAbrirPermiso={(id) => navigate(`/permisos/${id}`)}
+        />
+      )}
+
       <div className="texto-suave texto-sm" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
         {habilitantes.length === 0 ? (
-          <span>Este proyecto no tiene permisos reportados como críticos/habilitantes.</span>
+          <span>Este proyecto no tiene permisos reportados como habilitantes.</span>
         ) : (
           <>
             <span>
-              {habilitantes.length} permiso(s) reportado(s) como críticos/habilitantes. Fecha de ingreso bajo cada punto
-              {grupos.length < habilitantes.length && '. El número indica cuántos ingresaron ese día'}
+              {habilitantes.length} permiso(s) reportado(s) como habilitantes. Fecha de ingreso bajo cada punto, el
+              número es cuántos ingresaron ese día. Clic en un punto con más de uno para ver la lista
             </span>
             <Leyenda color={COLOR_ESTADO.Pendiente} texto="Pendiente" />
             <Leyenda color={COLOR_ESTADO.Resuelto} texto="Resuelto" />
@@ -202,5 +217,49 @@ function Leyenda({ color, texto }: { color: string; texto: string }) {
       <span style={{ width: 10, height: 10, borderRadius: '50%', background: color, display: 'inline-block' }} />
       {texto}
     </span>
+  )
+}
+
+/** The permits ingresados on one date, when a grouped dot is clicked — just that group, not every habilitante of the project. */
+function GrupoDesplegado({
+  grupo,
+  onClose,
+  onAbrirPermiso,
+}: {
+  grupo: { fecha: string | null; permisos: VPermiso[] }
+  onClose: () => void
+  onAbrirPermiso: (id: number) => void
+}) {
+  return (
+    <div className="panel" style={{ marginTop: 12, background: 'var(--azul-palido)', border: '1px solid var(--azul)' }}>
+      <div className="panel__header" style={{ padding: '10px 14px' }}>
+        <h3 style={{ margin: 0, fontSize: 13.5 }}>
+          Ingresaron el {fecha(grupo.fecha)} ({grupo.permisos.length})
+        </h3>
+        <button type="button" className="btn btn--sm btn--texto" onClick={onClose}>
+          Cerrar
+        </button>
+      </div>
+      <div className="panel__cuerpo" style={{ padding: '6px 14px 12px' }}>
+        {grupo.permisos.map((p) => (
+          <button
+            key={p.id}
+            type="button"
+            onClick={() => onAbrirPermiso(p.id)}
+            className="fila"
+            style={{
+              width: '100%', textAlign: 'left', background: 'none', border: 0,
+              padding: '6px 0', cursor: 'pointer', gap: 8, justifyContent: 'space-between',
+            }}
+          >
+            <span className="fila" style={{ gap: 8, minWidth: 0 }}>
+              <IdExcel valor={p.id_excel} />
+              <span className="truncar">{p.nombre}</span>
+            </span>
+            <EstadoBadge valor={p.estado} />
+          </button>
+        ))}
+      </div>
+    </div>
   )
 }

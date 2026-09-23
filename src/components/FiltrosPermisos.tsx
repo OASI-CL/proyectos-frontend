@@ -183,14 +183,6 @@ export function FiltrosPermisos({ filtros: filtrosUrl, setFiltro, limpiarFiltros
             <label className="check">
               <input
                 type="checkbox"
-                checked={filtros.critico === 'true'}
-                onChange={(e) => setFiltro('critico', e.target.checked ? 'true' : null)}
-              />
-              Solo críticos
-            </label>
-            <label className="check">
-              <input
-                type="checkbox"
                 checked={filtros.habilitante === 'true'}
                 onChange={(e) => setFiltro('habilitante', e.target.checked ? 'true' : null)}
               />

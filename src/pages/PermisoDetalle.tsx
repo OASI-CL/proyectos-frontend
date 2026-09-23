@@ -50,7 +50,6 @@ export function PermisoDetalle() {
         tipo_resolucion: permiso.tipo_resolucion ?? '',
         hito_tramitacion: permiso.hito_tramitacion ?? '',
         n_expediente: permiso.n_expediente ?? '',
-        critico: permiso.critico,
         habilitante_construccion: permiso.habilitante_construccion,
         observaciones: permiso.observaciones ?? '',
       })
@@ -93,7 +92,6 @@ export function PermisoDetalle() {
                 <IdExcel valor={p.id_excel} />
                 <EstadoBadge valor={p.estado} />
                 <SemaforoBadge valor={p.semaforo} />
-                {p.critico && <span className="badge badge--critico-flag">Crítico</span>}
                 {p.habilitante_construccion && (
                   <span className="badge badge--info">Habilitante construcción</span>
                 )}
@@ -168,7 +166,6 @@ export function PermisoDetalle() {
                   <Dato etiqueta="Tipo de resolución">{texto(p.tipo_resolucion)}</Dato>
                   <Dato etiqueta="Hito de tramitación">{texto(p.hito_tramitacion)}</Dato>
                   <Dato etiqueta="Días de tramitación">{dias(p.dias_tramitacion)}</Dato>
-                  <Dato etiqueta="Crítico">{siNo(p.critico)}</Dato>
                   <Dato etiqueta="Habilitante construcción">{siNo(p.habilitante_construccion)}</Dato>
                   <Dato etiqueta="Qué habilita">{texto(p.que_habilita)}</Dato>
                   <Dato etiqueta="Región">{texto(p.region)}</Dato>
@@ -280,14 +277,6 @@ export function PermisoDetalle() {
                     <div className="campo">
                       <label className="campo__label">Marcas</label>
                       <div className="columna" style={{ gap: 6 }}>
-                        <label className="check">
-                          <input
-                            type="checkbox"
-                            checked={Boolean(form.critico)}
-                            onChange={(e) => cambiar('critico', e.target.checked)}
-                          />
-                          Es un permiso crítico
-                        </label>
                         <label className="check">
                           <input
                             type="checkbox"

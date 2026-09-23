@@ -64,9 +64,6 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
                         {permit.priority === 'high' && (
                           <span className="badge badge--critico">Bloquea inicio</span>
                         )}
-                        {permit.isCritical && (
-                          <span className="badge badge--critico-flag">Crítico</span>
-                        )}
                       </div>
                     </td>
                     <td>

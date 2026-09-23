@@ -35,7 +35,6 @@ export function ProyectoDetalle() {
           <div className="celda-principal truncar">{p.nombre}</div>
           <div className="celda-secundaria">
             <IdExcel valor={p.id_excel} />
-            {p.critico && <span className="badge badge--critico-flag" style={{ marginLeft: 6 }}>Crítico</span>}
           </div>
         </>
       ),

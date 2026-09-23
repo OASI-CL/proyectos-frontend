@@ -185,14 +185,6 @@ export function PermisoNuevo() {
                 <label className="check">
                   <input
                     type="checkbox"
-                    checked={Boolean(form.critico)}
-                    onChange={(e) => cambiar('critico', e.target.checked)}
-                  />
-                  Es un permiso crítico
-                </label>
-                <label className="check">
-                  <input
-                    type="checkbox"
                     checked={Boolean(form.habilitante_construccion)}
                     onChange={(e) => cambiar('habilitante_construccion', e.target.checked)}
                   />
