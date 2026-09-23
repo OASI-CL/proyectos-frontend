@@ -24,20 +24,17 @@ datos reales (317 proyectos, 1.552 permisos):
 - Gráficos del dashboard con Recharts
 - Responsive hasta 400px de ancho
 
-🚧 Pendiente:
-- **Login real con Cognito.** Hoy el backend corre con `AUTH_MODE=dev` y el
-  rol se simula con el selector de la barra superior (ver abajo). Cuando el
-  User Pool exista, hay que implementar el login en `src/hooks/useAuth.ts`
-  (la interfaz que consumen las páginas no cambia) y sacar ese selector.
-- **Adjuntos**: la UI está lista, pero necesita que el backend tenga un bucket
-  S3 configurado (`S3_BUCKET_ADJUNTOS`) para funcionar.
+- Login real con Cognito y gestión de usuarios desde Administración → Usuarios
+- **Desplegado en AWS** con dos ambientes: `develop` → dev, `main` → prod
+  (ver "Deploy" abajo)
 
 ### Selector de rol (modo desarrollo)
 
-Mientras no haya Cognito, la barra superior tiene un selector para ver la app
-como cada rol (`admin`, `oasi`, `organismo_lector`, `empresa`). Manda headers
-`x-dev-*` que el backend interpreta solo en `AUTH_MODE=dev`. **Hay que sacarlo
-antes de producción** — está en `src/components/Layout.tsx`.
+Cuando las variables `VITE_COGNITO_*` están vacías, la barra superior muestra
+un selector para ver la app como cada rol (`admin`, `oasi`, `organismo`,
+`empresa`, `region`). Manda headers `x-dev-*` que el backend solo interpreta
+en `AUTH_MODE=dev`. Con Cognito configurado (siempre en AWS) el selector no
+aparece y los headers se ignoran.
 
 ---
 
@@ -154,16 +151,47 @@ VITE_COGNITO_CLIENT_ID=
 VITE_COGNITO_REGION=
 ```
 
-Los valores de `VITE_COGNITO_*` no hacen falta todavía (no hay integración
-real de Cognito armada aún).
+Con `VITE_COGNITO_*` vacías no hay login: se usa el selector de rol contra un
+backend local en `AUTH_MODE=dev`.
 
 ### 4. Levantar el server de desarrollo
 
+Hay dos formas, según contra qué API querés probar:
+
 ```bash
-npm run dev
+npm run dev       # contra tu backend local (lee .env)
+npm run dev:aws   # contra la API y el Cognito de DEV ya desplegados (lee .env.aws)
 ```
 
-Por defecto Vite sirve en `http://localhost:5173`.
+Las dos sirven en `http://localhost:5173`.
+
+`npm run dev:aws` sirve para probar un cambio de frontend con los datos y el
+login reales de dev **antes** de subirlo. `.env.aws` no se versiona; lleva:
+
+```
+VITE_API_URL=<URL del HTTP API de dev, sin barra al final>
+VITE_COGNITO_USER_POOL_ID=us-east-1_WDLIW3Jby
+VITE_COGNITO_CLIENT_ID=46cb3he4cbplji8chmj066vud6
+VITE_COGNITO_REGION=us-east-1
+```
+
+La URL de la API sale de lo que está desplegado:
+
+```bash
+cd ../proyectos-backend
+aws cloudformation describe-stacks --stack-name Oasi-Api-dev \
+  --query "Stacks[0].Outputs[?OutputKey=='ApiUrl'].OutputValue" --output text
+```
+
+(Funciona porque la API de dev acepta `http://localhost:5173`; la de prod no.)
+
+### 5. Antes de subir
+
+```bash
+npm run lint && npm run build
+```
+
+Es lo mismo que corre el CI en cada pull request.
 
 ---
 
@@ -171,7 +199,8 @@ Por defecto Vite sirve en `http://localhost:5173`.
 
 | Comando | Qué hace |
 |---|---|
-| `npm run dev` | Levanta el servidor de desarrollo de Vite con hot reload |
+| `npm run dev` | Levanta el servidor de desarrollo de Vite con hot reload, contra la API local |
+| `npm run dev:aws` | Lo mismo, pero contra la API y el login de dev en AWS (`.env.aws`) |
 | `npm run build` | Type-checks (`tsc -b`) y genera el build de producción en `dist/` |
 | `npm run preview` | Sirve el build de `dist/` localmente, para probar antes de deployar |
 | `npm run lint` | Corre `oxlint` |
@@ -266,13 +295,32 @@ compartido (ver `README_dashboard.md`, sección 12).
 
 ## Deploy
 
-Pensado para AWS Amplify Hosting:
+AWS Amplify Hosting construye y publica directo desde GitHub. No hay que
+correr nada a mano:
 
-- `npm run build` genera `dist/`, que es lo que Amplify sirve
-- Las variables `VITE_*` se configuran en la consola de Amplify (Environment
-  variables), no en un `.env` commiteado
-- El dominio final de Amplify es el que hay que whitelistear en el CORS del
-  backend (ver README de `proyectos-backend`)
+| Rama | Sitio | API y login |
+|---|---|---|
+| `develop` | `https://develop.<app-id>.amplifyapp.com` | dev |
+| `main` | `https://main.<app-id>.amplifyapp.com` | prod |
+
+**Flujo:** trabajás en `develop` → push → Amplify publica dev → probás ahí →
+pull request `develop → main` → merge → Amplify publica prod.
+
+- La configuración del build está en `amplify.yml`: usa la versión de Node de
+  `.nvmrc` y **falla a propósito** si la rama no tiene `VITE_API_URL`, para
+  no publicar nunca un sitio que llame a localhost.
+- Las variables `VITE_*` son **por rama** en Amplify (cada rama apunta a su
+  propia API y su propio Cognito). No se cargan a mano: las pone
+  `proyectos-backend/scripts/amplify-env.sh` leyendo lo que ya está desplegado.
+- Como Vite las incrusta al compilar, cambiar una variable requiere un nuevo
+  build.
+- `.github/workflows/ci.yml` corre lint + typecheck + build en cada pull
+  request, cosa que Amplify no hace.
+- La URL de cada rama tiene que estar en `frontendOrigins` del ambiente en
+  `proyectos-backend/infra/config.ts`, o la API la rechaza (CORS).
+
+Instrucciones completas (primera configuración, GitHub, costos, operación):
+[`proyectos-backend/infra/README.md`](https://github.com/OASI-CL/proyectos-backend/blob/develop/infra/README.md).
 
 ---
 

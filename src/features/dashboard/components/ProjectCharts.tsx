@@ -92,6 +92,7 @@ interface SectorProps {
  */
 export function ProjectsBySectorChart({ rows, selected, onSelect }: SectorProps) {
   const total = rows.reduce((sum, row) => sum + row.projectCount, 0)
+  const colors = buildSectorColors(rows.map((row) => row.sector))
 
   const data = rows.map((row) => ({
     ...row,
@@ -113,9 +114,9 @@ export function ProjectsBySectorChart({ rows, selected, onSelect }: SectorProps)
           nameKey="sector"
           stroke="#fff"
           fill={CHART_PRIMARY}
-          animationDuration={200}
+          isAnimationActive={false}
           content={
-            <TreemapCell selected={selected} onSelect={onSelect} />
+            <TreemapCell selected={selected} onSelect={onSelect} colors={colors} />
           }
         >
           <Tooltip
@@ -149,30 +150,52 @@ interface TreemapCellProps {
   share?: number
   selected?: string
   onSelect?: (sector: string) => void
+  colors?: Map<string, string>
 }
 
 /**
- * Custom cell renderer for the sector treemap.
+ * One solid colour per sector. All dark enough for white text to stay
+ * legible. There are 13 colours, one more than the sector catalog has rows.
+ */
+const SECTOR_PALETTE = [
+  '#1F4E79', '#2E7D32', '#C0504D', '#7B3F99', '#D17A00',
+  '#00838F', '#8D6E63', '#AD1457', '#546E7A', '#5D8C1F',
+  '#3949AB', '#6D4C41', '#00695C',
+]
+
+/**
+ * Colours go by alphabetical order of the sector name, not by size, so a
+ * sector keeps its colour when a filter changes the ranking. No two sectors
+ * ever share a colour.
+ */
+function buildSectorColors(sectors: string[]): Map<string, string> {
+  const sorted = [...new Set(sectors)].sort((a, b) => a.localeCompare(b, 'es'))
+  return new Map(sorted.map((s, i) => [s, SECTOR_PALETTE[i % SECTOR_PALETTE.length]]))
+}
+
+/**
+ * Custom cell renderer for the sector treemap: solid colour per sector,
+ * sector name and % inside when the box is big enough.
  *
- * Recharts' Treemap has no built-in "percentage inside the box" label, and
- * its default colouring is a rainbow unrelated to the institutional palette
- * — this renders each rectangle in the same blue as the rest of the
- * dashboard (darker for bigger sectors, so the size differences still read
- * even on same-hue boxes), with the sector name and % printed inside when
- * the box is big enough to hold them.
+ * Text is drawn without opacity and with a thin dark halo
+ * (`paintOrder: stroke`). The previous semi-transparent fills blurred the
+ * white labels.
  */
 function TreemapCell(props: TreemapCellProps) {
-  const { x = 0, y = 0, width = 0, height = 0, index = 0, sector, share = 0, selected, onSelect } = props
+  const { x = 0, y = 0, width = 0, height = 0, sector, share = 0, selected, onSelect, colors } = props
   if (!sector) return null
 
   const isSelected = selected === sector
-  // Darker blue for the largest boxes, lighter for the smallest — a subtle
-  // depth cue since every cell shares the same hue.
-  const opacity = Math.max(0.45, 1 - index * 0.09)
-  const fill = isSelected ? CHART_SELECTED : CHART_PRIMARY
+  const dimmed = selected !== undefined && !isSelected
   const percentLabel = `${Math.round(share * 100)}%`
   const canShowLabel = width > 56 && height > 34
   const canShowPercent = width > 56 && height > 50
+  const textStyle = {
+    paintOrder: 'stroke' as const,
+    stroke: 'rgba(0,0,0,0.35)',
+    strokeWidth: 2,
+    textRendering: 'geometricPrecision' as const,
+  }
 
   return (
     <g
@@ -184,24 +207,18 @@ function TreemapCell(props: TreemapCellProps) {
         y={y}
         width={width}
         height={height}
-        fill={fill}
-        fillOpacity={isSelected ? 1 : opacity}
-        stroke="#fff"
-        strokeWidth={2}
+        fill={colors?.get(sector) ?? CHART_PRIMARY}
+        fillOpacity={dimmed ? 0.35 : 1}
+        stroke={isSelected ? CHART_SELECTED : '#fff'}
+        strokeWidth={isSelected ? 4 : 2}
       />
       {canShowLabel && (
-        <text
-          x={x + 8}
-          y={y + 18}
-          fontSize={12}
-          fontWeight={600}
-          fill="#fff"
-        >
-          {truncateLabel(sector, Math.max(8, Math.floor(width / 7)))}
+        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={600} fill="#fff" style={textStyle}>
+          {truncateLabel(sector, Math.max(8, Math.floor(width / 7.5)))}
         </text>
       )}
       {canShowPercent && (
-        <text x={x + 8} y={y + 36} fontSize={16} fontWeight={700} fill="#fff">
+        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={700} fill="#fff" style={textStyle}>
           {percentLabel}
         </text>
       )}

@@ -1,21 +1,27 @@
 # AWS Amplify Hosting build settings.
 #
-# Amplify watches the GitHub repo directly — that IS the frontend CI/CD, so
-# there is no GitHub Action for deploying it: push to main and Amplify builds
-# and publishes. The workflow in .github/workflows/ci.yml only type-checks
-# pull requests, which Amplify does not do.
+# Amplify watches the GitHub repo directly — that IS the frontend CI/CD:
+#   push to develop -> builds and publishes the dev site
+#   push to main    -> builds and publishes the prod site
+# .github/workflows/ci.yml only checks pull requests, which Amplify does not.
 #
-# The VITE_* values come from Amplify's environment variables (App settings →
-# Environment variables), not from a committed .env. Vite inlines them at
-# build time, so a change there needs a redeploy.
+# The VITE_* values are per-branch environment variables in Amplify (each
+# branch points at its own API and Cognito pool), never a committed .env.
+# Vite inlines them at build time, so changing one needs a rebuild.
 version: 1
 frontend:
   phases:
     preBuild:
       commands:
+        # Same Node as local development and CI (.nvmrc).
+        - nvm install "$(cat .nvmrc)"
+        - nvm use "$(cat .nvmrc)"
         - npm ci
     build:
       commands:
+        # Fail the build instead of publishing a site that silently calls
+        # localhost because a branch variable was never set.
+        - test -n "$VITE_API_URL" || (echo "VITE_API_URL is not set for this branch" && exit 1)
         - npm run build
   artifacts:
     baseDirectory: dist
@@ -33,3 +39,5 @@ customHeaders:
         value: nosniff
       - key: Referrer-Policy
         value: strict-origin-when-cross-origin
+      - key: Strict-Transport-Security
+        value: max-age=31536000; includeSubDomains
