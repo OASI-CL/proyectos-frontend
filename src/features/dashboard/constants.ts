@@ -84,6 +84,43 @@ export const PROJECT_STATUS_FILL: Record<string, string> = {
   'En operación': '#25306B',
 }
 
+// --- Sector colours ------------------------------------------------------------
+//
+// From OASI's "mesas sectoriales" slide (Minería orange, Energía green,
+// Infraestructura grey, Pesca blue, Inmobiliario red, Comercio pink, Data
+// Centers purple, Forestal light green). Sectors that are not on the slide
+// got a colour in the same bright style. "Sin sector" is a light grey, lighter
+// than Infraestructura so the two don't get confused.
+
+export const SECTOR_COLORS: Record<string, string> = {
+  'Minería': '#FF8C1A',
+  'Energía': '#2DB84C',
+  'Infraestructura / Obras públicas': '#808080',
+  'Pesca y Acuicultura': '#1565C0',
+  'Inmobiliario': '#FF2D55',
+  'Comercio': '#E889AE',
+  'Data Centers': '#9B30F5',
+  'Forestal': '#8CCB45',
+  'Industria': '#6A1B9A',
+  'Instalaciones fabriles varias': '#3F51B5',
+  'Agropecuario': '#F2B705',
+  'Saneamiento Ambiental': '#00ACC1',
+  'Otro': '#E889AE',
+}
+
+export const SECTOR_NONE_COLOR = '#C8C8C8'
+const SECTOR_FALLBACK = ['#FF6F61', '#00B894', '#FDCB6E', '#6C5CE7', '#E17055']
+
+export function sectorColor(sector: string | null | undefined): string {
+  if (!sector || sector === 'Sin sector') return SECTOR_NONE_COLOR
+  const known = SECTOR_COLORS[sector]
+  if (known) return known
+  // A sector added later to the catalog still gets a bright colour.
+  let hash = 0
+  for (const ch of sector) hash = (hash * 31 + ch.charCodeAt(0)) >>> 0
+  return SECTOR_FALLBACK[hash % SECTOR_FALLBACK.length]
+}
+
 /** Chart palette for neutral categorical series (region, sector). */
 export const CHART_PRIMARY = '#006BB9'
 export const CHART_SECONDARY = '#6BCCD6'

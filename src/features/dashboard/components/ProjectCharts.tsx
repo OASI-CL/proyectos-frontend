@@ -6,7 +6,7 @@ import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import {
   CHART_CURSOR, CHART_GRID, CHART_PRIMARY, CHART_SELECTED,
-  RCA_STATUS_FILL, RCA_STATUS_LABELS, RCA_STATUS_STROKE,
+  RCA_STATUS_FILL, RCA_STATUS_LABELS, RCA_STATUS_STROKE, sectorColor,
 } from '../constants'
 import { formatMmusd, formatNumber } from '../../../lib/formatters'
 import type { RcaStatus, RcaStatusRow, RegionProjectRow, SectorProjectRow } from '../types'
@@ -153,24 +153,9 @@ interface TreemapCellProps {
   colors?: Map<string, string>
 }
 
-/**
- * One solid colour per sector. All dark enough for white text to stay
- * legible. There are 13 colours, one more than the sector catalog has rows.
- */
-const SECTOR_PALETTE = [
-  '#1F4E79', '#2E7D32', '#C0504D', '#7B3F99', '#D17A00',
-  '#00838F', '#8D6E63', '#AD1457', '#546E7A', '#5D8C1F',
-  '#3949AB', '#6D4C41', '#00695C',
-]
-
-/**
- * Colours go by alphabetical order of the sector name, not by size, so a
- * sector keeps its colour when a filter changes the ranking. No two sectors
- * ever share a colour.
- */
+/** Sector colours come from constants.ts (OASI's slide palette), shared with the map. */
 function buildSectorColors(sectors: string[]): Map<string, string> {
-  const sorted = [...new Set(sectors)].sort((a, b) => a.localeCompare(b, 'es'))
-  return new Map(sorted.map((s, i) => [s, SECTOR_PALETTE[i % SECTOR_PALETTE.length]]))
+  return new Map(sectors.map((s) => [s, sectorColor(s)]))
 }
 
 /**

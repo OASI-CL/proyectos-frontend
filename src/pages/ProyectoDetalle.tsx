@@ -50,6 +50,16 @@ export function ProyectoDetalle() {
         </>
       ),
     },
+    {
+      clave: 'habilitante_construccion',
+      titulo: 'Habilitante',
+      render: (p) =>
+        p.habilitante_construccion ? (
+          <span className="badge badge--info">Sí</span>
+        ) : (
+          <span className="texto-tenue">No</span>
+        ),
+    },
     { clave: 'estado', titulo: 'Estado', render: (p) => <EstadoBadge valor={p.estado} /> },
     {
       clave: 'fecha_ingreso',

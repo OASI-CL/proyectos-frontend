@@ -177,11 +177,11 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
 
       <div className="texto-suave texto-sm" style={{ display: 'flex', gap: 16, flexWrap: 'wrap', marginTop: 4 }}>
         {habilitantes.length === 0 ? (
-          <span>Este proyecto no tiene permisos habilitantes de construcción.</span>
+          <span>Este proyecto no tiene permisos reportados como críticos/habilitantes.</span>
         ) : (
           <>
             <span>
-              {habilitantes.length} permiso(s) habilitante(s) · fecha de ingreso bajo cada punto
+              {habilitantes.length} permiso(s) reportado(s) como críticos/habilitantes · fecha de ingreso bajo cada punto
               {grupos.length < habilitantes.length && ' · el número indica cuántos ingresaron ese día'}
             </span>
             <Leyenda color={COLOR_ESTADO.Pendiente} texto="Pendiente" />

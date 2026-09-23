@@ -12,7 +12,9 @@ import type { PaginatedResponse, VProyecto } from '../shared/types'
 
 export function Proyectos() {
   const navigate = useNavigate()
-  const { puedeEditar, esEmpresa } = useAuth()
+  const { puedeEditar, esEmpresa, esRegion, usuario } = useAuth()
+  // A region user only sees its region (the backend enforces it); the select just shows it fixed.
+  const regionFija = esRegion ? usuario?.region ?? null : null
   const { datos: catalogos } = useCatalogos()
   const { filtros, setFiltro, limpiarFiltros, queryString, cantidadFiltros } = useFiltrosUrl()
 
@@ -158,11 +160,14 @@ export function Proyectos() {
             </div>
 
             <div className="campo">
-              <label className="campo__label" htmlFor="p-region">Región</label>
+              <label className="campo__label" htmlFor="p-region">
+                Región{regionFija && <span className="texto-tenue" title="Fijo según tu cuenta"> 🔒</span>}
+              </label>
               <select
                 id="p-region"
                 className="select"
-                value={filtros.region ?? ''}
+                disabled={!!regionFija}
+                value={regionFija ?? filtros.region ?? ''}
                 onChange={(e) => setFiltro('region', e.target.value)}
               >
                 <option value="">Todas</option>

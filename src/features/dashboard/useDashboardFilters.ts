@@ -31,8 +31,15 @@ export type FilterKey = (typeof FILTER_KEYS)[number]
 
 export type DashboardFilters = Partial<Record<FilterKey, string>>
 
-export function useDashboardFilters() {
+/**
+ * `locked`: filters fixed by the user's scope (a 'region' user's region, an
+ * 'organismo' user's agency). They always apply, can't be changed or cleared,
+ * and don't count as "active filters". The backend enforces the same scope
+ * regardless; locking them here just makes the UI say so.
+ */
+export function useDashboardFilters(locked: DashboardFilters = {}) {
   const [searchParams, setSearchParams] = useSearchParams()
+  const lockedKey = JSON.stringify(locked)
 
   const filters = useMemo<DashboardFilters>(() => {
     const result: DashboardFilters = {}
@@ -40,11 +47,12 @@ export function useDashboardFilters() {
       const value = searchParams.get(key)
       if (value !== null && value !== '') result[key] = value
     }
-    return result
-  }, [searchParams])
+    return { ...result, ...(JSON.parse(lockedKey) as DashboardFilters) }
+  }, [searchParams, lockedKey])
 
   const setFilter = useCallback(
     (key: FilterKey, value: string | null) => {
+      if (key in (JSON.parse(lockedKey) as DashboardFilters)) return
       setSearchParams(
         (previous) => {
           const next = new URLSearchParams(previous)
@@ -61,7 +69,7 @@ export function useDashboardFilters() {
         { replace: true },
       )
     },
-    [setSearchParams],
+    [setSearchParams, lockedKey],
   )
 
   /** Click-to-filter: clicking the value that is already active clears it. */
@@ -85,7 +93,7 @@ export function useDashboardFilters() {
     return params.toString()
   }, [filters])
 
-  const activeCount = Object.keys(filters).length
+  const activeCount = Object.keys(filters).filter((key) => !(key in locked)).length
 
   return {
     filters,
