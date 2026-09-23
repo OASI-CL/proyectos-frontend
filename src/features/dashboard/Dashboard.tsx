@@ -92,15 +92,16 @@ export function Dashboard() {
 
       {data && !error && (
         <div className={isRefreshing ? 'is-refreshing' : undefined}>
-          <ProjectsMap
-            projects={data.mapProjects ?? []}
-            sectors={data.projectsBySector}
-            totalInvestment={data.kpis.investmentMmusd}
-            selectedSector={filters.sector}
-            onSelectSector={(sector) => toggleFilter('sector', sector)}
-          />
-
           <KpiRow kpis={data.kpis} />
+
+          <div className="mt-24">
+            <ProjectsMap
+              projects={data.mapProjects ?? []}
+              sectors={data.projectsBySector}
+              selectedSector={filters.sector}
+              onSelectSector={(sector) => toggleFilter('sector', sector)}
+            />
+          </div>
 
           {/* ---------------------------- PROYECTOS ---------------------------- */}
           <SectionTitle

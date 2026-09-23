@@ -120,7 +120,7 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
   return (
     <ChartCard
       title="Línea de tiempo de inicio de construcción"
-      hint="Clic en un punto para abrir la ficha · usá + / − para acercar y ◀ ▶ para moverte"
+      hint="Clic en un punto para abrir la ficha. Usá + / − para acercar y ◀ ▶ para moverte"
       height={chartAreaHeight + captionHeight + NAV_HEIGHT}
       notice={
         missing > 0 ? (

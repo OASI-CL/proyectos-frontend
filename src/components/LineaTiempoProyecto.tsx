@@ -181,8 +181,8 @@ export function LineaTiempoProyecto({ proyecto, permisos }: { proyecto: VProyect
         ) : (
           <>
             <span>
-              {habilitantes.length} permiso(s) reportado(s) como críticos/habilitantes · fecha de ingreso bajo cada punto
-              {grupos.length < habilitantes.length && ' · el número indica cuántos ingresaron ese día'}
+              {habilitantes.length} permiso(s) reportado(s) como críticos/habilitantes. Fecha de ingreso bajo cada punto
+              {grupos.length < habilitantes.length && '. El número indica cuántos ingresaron ese día'}
             </span>
             <Leyenda color={COLOR_ESTADO.Pendiente} texto="Pendiente" />
             <Leyenda color={COLOR_ESTADO.Resuelto} texto="Resuelto" />

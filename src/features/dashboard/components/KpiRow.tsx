@@ -16,7 +16,7 @@ export function KpiRow({ kpis }: { kpis: DashboardKpis }) {
       : 0
 
   return (
-    <div className="kpis">
+    <div className="kpis kpis--resumen">
       <div className="kpi">
         <div className="kpi__etiqueta">Inversión total</div>
         <div className="kpi__valor">{formatMmusdCompact(kpis.investmentMmusd)}</div>

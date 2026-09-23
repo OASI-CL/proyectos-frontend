@@ -60,12 +60,11 @@ function radiusFor(investment: number | null) {
 interface Props {
   projects: MapProject[]
   sectors: SectorProjectRow[]
-  totalInvestment: number
   selectedSector?: string
   onSelectSector: (sector: string) => void
 }
 
-export function ProjectsMap({ projects, sectors, totalInvestment, selectedSector, onSelectSector }: Props) {
+export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector }: Props) {
   const navigate = useNavigate()
 
   const placed = useMemo(
@@ -88,22 +87,13 @@ export function ProjectsMap({ projects, sectors, totalInvestment, selectedSector
       <div className="panel__header">
         <h2>Proyectos por sector e inversión</h2>
         <span className="texto-sm texto-suave">
-          Clic en una barra para filtrar el sector · clic en un punto para abrir el proyecto
+          Clic en una barra para filtrar el sector. Clic en un punto para abrir el proyecto
         </span>
       </div>
       <div className="panel__cuerpo">
         <div className="mapa-sector">
           <div className="mapa-sector__izq">
-            <div className="mapa-sector__kpis">
-              <div className="mapa-sector__kpi">
-                <strong>{formatMmusd(totalInvestment)}</strong>
-                <span>inversión</span>
-              </div>
-              <div className="mapa-sector__kpi">
-                <strong>{formatNumber(projects.length)}</strong>
-                <span>proyectos</span>
-              </div>
-            </div>
+            <div className="mapa-sector__titulo">Inversión por sector (MMUSD)</div>
             <div style={{ height: 380 }}>
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 8 }}>
@@ -167,8 +157,8 @@ export function ProjectsMap({ projects, sectors, totalInvestment, selectedSector
               style={{ height: '100%', width: '100%', borderRadius: 6 }}
             >
               <TileLayer
-                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/">CARTO</a>'
-                url="https://{s}.basemaps.cartocdn.com/light_all/{z}/{x}/{y}{r}.png"
+                attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
+                url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
               {placed.map((p) => (
                 <CircleMarker
