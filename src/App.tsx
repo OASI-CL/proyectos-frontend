@@ -40,7 +40,20 @@ export default function App() {
   }
 
   if (cognitoConfigurado && !autenticado) {
-    return <Login onLogin={() => setAutenticado(true)} />
+    return (
+      <Login
+        onLogin={() => {
+          // El Dashboard ("/") es el home. Si el navegador quedó en otra
+          // URL (un link directo a un permiso, una pestaña vieja, lo que
+          // sea) antes de loguearse, entrar igual tiene que aterrizar acá,
+          // no reabrir esa URL. Se cambia la URL ANTES de montar el Router
+          // (que todavía no existe en este punto) para que arranque
+          // directo en "/", en vez de navegar después y que se note el salto.
+          window.history.replaceState(null, '', '/')
+          setAutenticado(true)
+        }}
+      />
+    )
   }
 
   return (
