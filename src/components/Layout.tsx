@@ -49,11 +49,15 @@ function SelectorRolDev() {
   )
 }
 
-/** Pending-approvals count for the nav badge. */
-function useContadorAprobaciones() {
+/** Pending-approvals count for the nav badge. `activo=false` skips the call entirely. */
+function useContadorAprobaciones(activo: boolean) {
   const [pendientes, setPendientes] = useState(0)
 
   useEffect(() => {
+    if (!activo) {
+      setPendientes(0)
+      return
+    }
     let cancelado = false
     api
       .get<{ pendientes: number }>('/approvals/count')
@@ -66,18 +70,26 @@ function useContadorAprobaciones() {
     return () => {
       cancelado = true
     }
-  }, [])
+  }, [activo])
 
   return pendientes
 }
 
 export function Layout() {
-  const { usuario, veComites, esAdmin, esRegion } = useAuth()
+  const { usuario, identidadIncompleta, veComites, esAdmin, esRegion } = useAuth()
   const [menuAbierto, setMenuAbierto] = useState(false)
   // 'region' is read-only, so it never has anything to approve or follow up on.
-  const pendientes = useContadorAprobaciones()
+  // Skipped entirely when there's no usable `usuario` — nothing to count yet.
+  const pendientes = useContadorAprobaciones(!!usuario)
 
   const cerrarMenu = () => setMenuAbierto(false)
+
+  const nombreSesion = usuario?.nombre ?? identidadIncompleta?.nombre
+  const rolSesion = usuario ? (ROLE_LABELS[usuario.rol] ?? usuario.rol) : 'Sin acceso completo'
+  const botonSalir = async () => {
+    await cerrarSesion()
+    window.location.reload()
+  }
 
   return (
     <div className="app">
@@ -109,27 +121,37 @@ export function Layout() {
         {/* The role switcher only works against AUTH_MODE=dev, so it is hidden
             the moment a real user pool is configured. */}
         {!cognitoConfigurado && <SelectorRolDev />}
-        {cognitoConfigurado && usuario && (
+        {cognitoConfigurado && nombreSesion && (
           <div className="topbar__sesion">
             <div className="topbar__usuario">
-              <div className="topbar__usuario-nombre">{usuario.nombre}</div>
-              <div className="topbar__usuario-rol">{ROLE_LABELS[usuario.rol] ?? usuario.rol}</div>
+              <div className="topbar__usuario-nombre">{nombreSesion}</div>
+              <div className="topbar__usuario-rol">{rolSesion}</div>
             </div>
-            <button
-              type="button"
-              className="topbar__salir"
-              onClick={async () => {
-                await cerrarSesion()
-                window.location.reload()
-              }}
-            >
+            <button type="button" className="topbar__salir" onClick={botonSalir}>
               Salir
             </button>
           </div>
         )}
       </header>
 
-      <div className="cuerpo">
+      {/* Sesión válida pero sin rol/alcance usable: nada de lo demás va a
+          cargar (todo pide requireAuth), así que en vez de dejar ver el menú
+          y una pantalla llena de errores, se explica y se ofrece salir. */}
+      {identidadIncompleta && (
+        <div className="cuerpo">
+          <main className="contenido">
+            <div className="alerta alerta--error" style={{ maxWidth: 560, margin: '40px auto' }}>
+              <strong>Tu cuenta todavía no tiene acceso configurado.</strong>
+              <p style={{ marginTop: 8 }}>{identidadIncompleta.alcanceIncompleto}</p>
+              <button type="button" className="btn btn--secundario" style={{ marginTop: 12 }} onClick={botonSalir}>
+                Salir
+              </button>
+            </div>
+          </main>
+        </div>
+      )}
+
+      {!identidadIncompleta && <div className="cuerpo">
         <nav className={`menu ${menuAbierto ? 'abierto' : ''}`} aria-label="Navegación principal">
           <div className="menu__grupo">
             <div className="menu__titulo">Seguimiento</div>
@@ -192,7 +214,7 @@ export function Layout() {
         <main className="contenido">
           <Outlet />
         </main>
-      </div>
+      </div>}
     </div>
   )
 }

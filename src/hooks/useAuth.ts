@@ -16,6 +16,21 @@ export interface UsuarioActual {
 }
 
 /**
+ * Lo que devuelve `/me` cuando el token es válido pero a la persona le falta
+ * rol o alcance en `usuarios` (recién invitada, o la fila quedó incompleta).
+ * No es un `UsuarioActual` completo — no alcanza para usar la app — pero sí
+ * lo suficiente para saludarla por nombre y dejarla cerrar sesión.
+ */
+export interface IdentidadIncompleta {
+  sub: string
+  nombre: string
+  email: string
+  rol: RolUsuario | null
+  /** Por qué no se pudo resolver del todo, para mostrar tal cual. */
+  alcanceIncompleto: string
+}
+
+/**
  * Current session and what the role is allowed to do.
  *
  * The flags below mirror middleware/scope.ts on the backend. They only drive
@@ -32,6 +47,7 @@ export interface UsuarioActual {
  */
 export function useAuth() {
   const [usuario, setUsuario] = useState<UsuarioActual | null>(null)
+  const [identidadIncompleta, setIdentidadIncompleta] = useState<IdentidadIncompleta | null>(null)
   const [cargando, setCargando] = useState(true)
   const [rolDev, setRolDevEstado] = useState<RolDev>(() => leerRolDev())
 
@@ -40,12 +56,22 @@ export function useAuth() {
     setCargando(true)
 
     api
-      .get<UsuarioActual>('/me')
+      .get<UsuarioActual | IdentidadIncompleta>('/me')
       .then((r) => {
-        if (!cancelado) setUsuario(r.data)
+        if (cancelado) return
+        if ('alcanceIncompleto' in r.data) {
+          setUsuario(null)
+          setIdentidadIncompleta(r.data)
+        } else {
+          setUsuario(r.data)
+          setIdentidadIncompleta(null)
+        }
       })
       .catch(() => {
-        if (!cancelado) setUsuario(null)
+        if (!cancelado) {
+          setUsuario(null)
+          setIdentidadIncompleta(null)
+        }
       })
       .finally(() => {
         if (!cancelado) setCargando(false)
@@ -73,6 +99,8 @@ export function useAuth() {
 
   return {
     usuario,
+    /** Presente cuando hay sesión válida pero `usuario` es null porque falta rol/alcance. */
+    identidadIncompleta,
     cargando,
     rol,
     rolDev,
