@@ -164,10 +164,24 @@ function buildSectorColors(sectors: string[]): Map<string, string> {
  * Plain white text, no shadow/outline/filter — every sector colour in the
  * palette is dark enough for it to read cleanly on its own; anything added
  * on top (a stroke, a drop-shadow) just blurred it.
+ *
+ * The treemap layout gives x/y/width/height as floats (e.g. 373.428571px):
+ * text placed at a fractional position gets anti-aliased across two
+ * pixels instead of drawn crisply on one, which is what actually reads as
+ * "blurry" — not a shadow or a font issue. Rounding every coordinate to a
+ * whole pixel before drawing anything fixes that.
  */
 function TreemapCell(props: TreemapCellProps) {
-  const { x = 0, y = 0, width = 0, height = 0, sector, share = 0, selected, onSelect, colors } = props
+  const {
+    x: xRaw = 0, y: yRaw = 0, width: widthRaw = 0, height: heightRaw = 0,
+    sector, share = 0, selected, onSelect, colors,
+  } = props
   if (!sector) return null
+
+  const x = Math.round(xRaw)
+  const y = Math.round(yRaw)
+  const width = Math.round(widthRaw)
+  const height = Math.round(heightRaw)
 
   const isSelected = selected === sector
   const dimmed = selected !== undefined && !isSelected
