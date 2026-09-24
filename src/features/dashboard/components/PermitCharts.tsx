@@ -1,12 +1,12 @@
 import {
-  Bar, BarChart, Cell, CartesianGrid, Legend, Pie, PieChart,
+  Bar, BarChart, Cell, CartesianGrid, Legend, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import {
   AXIS_TICK, CHART_CURSOR, CHART_GRID,
-  PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, PERMIT_STATUS_STROKE,
+  PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, PERMIT_STATUS_STROKE, PERMIT_STATUS_TEXT,
 } from '../constants'
 import { formatNumber } from '../../../lib/formatters'
 import type {
@@ -62,7 +62,19 @@ function statusBars<T extends object>(
         if (row) onRowClick(row)
       }}
       style={{ cursor: 'pointer' }}
-    />
+    >
+      {/* Count inside each segment, in that status's own text colour. Blank
+          instead of "0" — a segment with nothing in it has no room to show
+          a label anyway, and a field of zeros would just be noise. */}
+      <LabelList
+        dataKey={status}
+        position="inside"
+        fill={PERMIT_STATUS_TEXT[status]}
+        fontSize={11}
+        fontWeight={600}
+        formatter={(value: unknown) => (Number(value) > 0 ? formatNumber(Number(value)) : '')}
+      />
+    </Bar>
   ))
 }
 
