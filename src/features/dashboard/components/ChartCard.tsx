@@ -31,7 +31,14 @@ export function ChartCard({ title, hint, notice, height = 300, children }: Props
       </div>
       <div className="panel__cuerpo">
         {notice && <div className="alerta alerta--aviso" style={{ marginBottom: 14 }}>{notice}</div>}
-        <div style={{ flex: 1, minHeight: height }}>{children}</div>
+        {/* flexGrow+flexBasis, not the `flex: 1` shorthand: that sets
+            flex-basis to 0%, and a standalone chart (nothing stretching its
+            panel taller) then has no free space to grow into — it collapses
+            to 0px and the whole chart goes blank (ResponsiveContainer measures
+            a 0-height parent). flexBasis: height gives it a real starting
+            size always; flexGrow still lets it expand when a taller sibling
+            stretches the panel. */}
+        <div style={{ flexGrow: 1, flexBasis: height, minHeight: height }}>{children}</div>
       </div>
     </div>
   )
