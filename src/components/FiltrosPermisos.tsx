@@ -1,4 +1,5 @@
 import { useCatalogos } from '../hooks/useCatalogos'
+import { useAuth } from '../hooks/useAuth'
 
 interface Props {
   filtros: Record<string, string>
@@ -12,8 +13,24 @@ interface Props {
  * Filtros de la página de Permisos. Todos escriben en la URL (useFiltrosUrl),
  * así la vista filtrada se puede compartir por link.
  */
-export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFiltros, total }: Props) {
+export function FiltrosPermisos({ filtros: filtrosUrl, setFiltro, limpiarFiltros, cantidadFiltros, total }: Props) {
   const { datos: catalogos } = useCatalogos()
+  const { rol, usuario } = useAuth()
+
+  // A region user only sees its region, an organismo user only its agency.
+  // The backend already enforces this; here the select just shows it fixed.
+  const fijoRegion = rol === 'region' && usuario?.region ? usuario.region : null
+  const fijoOrganismo = rol === 'organismo' && usuario?.organismoId ? String(usuario.organismoId) : null
+  const ministerioDelOrganismo = fijoOrganismo
+    ? catalogos?.organismos.find((o) => String(o.id) === fijoOrganismo)?.ministerio_id
+    : undefined
+  const filtros: Record<string, string> = {
+    ...filtrosUrl,
+    ...(fijoRegion ? { region: fijoRegion } : {}),
+    ...(fijoOrganismo ? { organismo_id: fijoOrganismo } : {}),
+    ...(ministerioDelOrganismo ? { ministerio_id: String(ministerioDelOrganismo) } : {}),
+  }
+  const candado = <span className="texto-tenue" title="Fijo según tu cuenta"> 🔒</span>
 
   return (
     <div className="panel__cuerpo">
@@ -31,10 +48,11 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
         </div>
 
         <div className="campo">
-          <label className="campo__label" htmlFor="f-organismo">Organismo</label>
+          <label className="campo__label" htmlFor="f-organismo">Organismo{fijoOrganismo && candado}</label>
           <select
             id="f-organismo"
             className="select"
+            disabled={!!fijoOrganismo}
             value={filtros.organismo_id ?? ''}
             onChange={(e) => setFiltro('organismo_id', e.target.value)}
           >
@@ -46,10 +64,11 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
         </div>
 
         <div className="campo">
-          <label className="campo__label" htmlFor="f-ministerio">Ministerio</label>
+          <label className="campo__label" htmlFor="f-ministerio">Ministerio{fijoOrganismo && candado}</label>
           <select
             id="f-ministerio"
             className="select"
+            disabled={!!fijoOrganismo}
             value={filtros.ministerio_id ?? ''}
             onChange={(e) => setFiltro('ministerio_id', e.target.value)}
           >
@@ -91,10 +110,11 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
         </div>
 
         <div className="campo">
-          <label className="campo__label" htmlFor="f-region">Región</label>
+          <label className="campo__label" htmlFor="f-region">Región{fijoRegion && candado}</label>
           <select
             id="f-region"
             className="select"
+            disabled={!!fijoRegion}
             value={filtros.region ?? ''}
             onChange={(e) => setFiltro('region', e.target.value)}
           >
@@ -160,14 +180,6 @@ export function FiltrosPermisos({ filtros, setFiltro, limpiarFiltros, cantidadFi
         <div className="campo">
           <label className="campo__label">Marcas</label>
           <div className="columna" style={{ gap: 6 }}>
-            <label className="check">
-              <input
-                type="checkbox"
-                checked={filtros.critico === 'true'}
-                onChange={(e) => setFiltro('critico', e.target.checked ? 'true' : null)}
-              />
-              Solo críticos
-            </label>
             <label className="check">
               <input
                 type="checkbox"

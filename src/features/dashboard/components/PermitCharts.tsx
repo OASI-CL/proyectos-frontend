@@ -1,12 +1,12 @@
 import {
-  Bar, BarChart, Cell, CartesianGrid, Legend, Pie, PieChart,
+  Bar, BarChart, Cell, CartesianGrid, Legend, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
 } from 'recharts'
 import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import {
-  CHART_CURSOR, CHART_GRID,
-  PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, PERMIT_STATUS_STROKE,
+  AXIS_TICK, CHART_CURSOR, CHART_GRID,
+  PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, PERMIT_STATUS_STROKE, PERMIT_STATUS_TEXT,
 } from '../constants'
 import { formatNumber } from '../../../lib/formatters'
 import type {
@@ -57,14 +57,24 @@ function statusBars<T extends object>(
       name={PERMIT_STATUS_LABELS[status]}
       stackId="permits"
       fill={PERMIT_STATUS_FILL[status]}
-      stroke={PERMIT_STATUS_STROKE[status]}
-      strokeWidth={1}
       onClick={(event) => {
         const row = pickChartRow<T>(event, rowKey)
         if (row) onRowClick(row)
       }}
       style={{ cursor: 'pointer' }}
-    />
+    >
+      {/* Count inside each segment, in that status's own text colour. Blank
+          instead of "0" — a segment with nothing in it has no room to show
+          a label anyway, and a field of zeros would just be noise. */}
+      <LabelList
+        dataKey={status}
+        position="inside"
+        fill={PERMIT_STATUS_TEXT[status]}
+        fontSize={11}
+        fontWeight={600}
+        formatter={(value: unknown) => (Number(value) > 0 ? formatNumber(Number(value)) : '')}
+      />
+    </Bar>
   ))
 }
 
@@ -85,14 +95,20 @@ export function PermitsByAgencyChart({ rows, onSelectAgency }: AgencyProps) {
       height={Math.max(300, rows.length * 30)}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} layout="vertical" margin={{ top: 4, right: 24, left: 8, bottom: 4 }}>
+        <BarChart
+          data={rows}
+          layout="vertical"
+          margin={{ top: 4, right: 24, left: 8, bottom: 4 }}
+          barCategoryGap="6%"
+        >
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} horizontal={false} />
-          <XAxis type="number" allowDecimals={false} />
+          <XAxis type="number" allowDecimals={false} tick={AXIS_TICK} />
           <YAxis
             type="category"
             dataKey="agency"
             width={170}
             interval={0}
+            tick={AXIS_TICK}
             tickFormatter={(value: string) => truncateLabel(value, 22)}
           />
           <Tooltip cursor={{ fill: CHART_CURSOR, opacity: 0.4 }} content={<StatusBreakdownTooltip />} />
@@ -121,10 +137,10 @@ export function PermitsByRegionChart({ rows, onSelectRegion }: RegionProps) {
       height={340}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }}>
+        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }} barCategoryGap="6%">
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
-          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} />
-          <YAxis allowDecimals={false} />
+          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} tick={AXIS_TICK} />
+          <YAxis allowDecimals={false} tick={AXIS_TICK} />
           <Tooltip cursor={{ fill: CHART_CURSOR, opacity: 0.4 }} content={<StatusBreakdownTooltip />} />
           <Legend wrapperStyle={{ fontSize: 12 }} />
           {statusBars<RegionPermitRow>('region', (row) => onSelectRegion(row.region))}
@@ -158,7 +174,7 @@ export function PermitStatusDonut({ rows, selected, onSelect }: DonutProps) {
     <ChartCard
       title="Distribución por estado"
       hint="Clic en un segmento para filtrar"
-      height={320}
+      height={340}
     >
       {total === 0 ? (
         <div className="estado-caja">
@@ -184,8 +200,8 @@ export function PermitStatusDonut({ rows, selected, onSelect }: DonutProps) {
                 <Cell
                   key={row.status}
                   fill={PERMIT_STATUS_FILL[row.status]}
-                  stroke={PERMIT_STATUS_STROKE[row.status]}
-                  strokeWidth={selected === row.status ? 3 : 1}
+                  stroke={selected === row.status ? PERMIT_STATUS_STROKE[row.status] : undefined}
+                  strokeWidth={selected === row.status ? 3 : 0}
                 />
               ))}
             </Pie>

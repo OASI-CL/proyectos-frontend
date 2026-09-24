@@ -35,7 +35,6 @@ export function ProyectoDetalle() {
           <div className="celda-principal truncar">{p.nombre}</div>
           <div className="celda-secundaria">
             <IdExcel valor={p.id_excel} />
-            {p.critico && <span className="badge badge--critico-flag" style={{ marginLeft: 6 }}>Crítico</span>}
           </div>
         </>
       ),
@@ -49,6 +48,16 @@ export function ProyectoDetalle() {
           <div className="celda-secundaria truncar">{p.ministerio_nombre}</div>
         </>
       ),
+    },
+    {
+      clave: 'habilitante_construccion',
+      titulo: 'Habilitante',
+      render: (p) =>
+        p.habilitante_construccion ? (
+          <span className="badge badge--info">Sí</span>
+        ) : (
+          <span className="texto-tenue">No</span>
+        ),
     },
     { clave: 'estado', titulo: 'Estado', render: (p) => <EstadoBadge valor={p.estado} /> },
     {

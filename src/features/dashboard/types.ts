@@ -52,6 +52,17 @@ export interface TimelineProject {
   pendingPermitCount: number
 }
 
+export interface MapProject {
+  id: number
+  idExcel: string | null
+  name: string
+  companyName: string | null
+  sector: string | null
+  region: string | null
+  projectStatus: string | null
+  investmentMmusd: number | null
+}
+
 export interface MonitorProject {
   id: number
   idExcel: string | null
@@ -108,7 +119,6 @@ export interface CriticalPermit {
   daysInProcess: number | null
   expectedResolutionOn: string | null
   investmentMmusd: number | null
-  isCritical: boolean
   constructionStartOn: string | null
   priority: 'high' | 'normal'
 }
@@ -119,7 +129,8 @@ export interface DashboardData {
   projectsBySector: SectorProjectRow[]
   rcaStatus: RcaStatusRow[]
   timeline: TimelineProject[]
-  monitor: { upcoming: MonitorBucket; fewPermits: MonitorBucket }
+  mapProjects: MapProject[]
+  monitor: { upcoming: MonitorBucket }
   permitsByAgency: AgencyPermitRow[]
   permitsByRegion: RegionPermitRow[]
   permitStatus: PermitStatusRow[]

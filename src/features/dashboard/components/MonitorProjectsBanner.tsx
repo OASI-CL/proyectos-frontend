@@ -5,38 +5,23 @@ import type { MonitorBucket, MonitorProject } from '../types'
 
 interface Props {
   upcoming: MonitorBucket
-  fewPermits: MonitorBucket
 }
-
-type BucketKey = 'upcoming' | 'fewPermits'
 
 /**
  * "Monitorear proyectos" (README_dashboard section 5).
  *
- * Two independent lenses on projects that have not started construction yet
- * — a project can show up in both cards:
- *   - upcoming: construction starts within the next 3 months
- *   - fewPermits: only 1 or 2 pending permits left, close to fully cleared
+ * Projects that have not started construction yet, with an estimated start
+ * within the next 6 months. Used to be a two-card grid (this one plus
+ * "Menos de 3 permisos"); OASI only wanted this lens, so the second card is
+ * gone and this is back to a single toggle card, not a grid.
+ *
+ * Starts collapsed (`abierto = false`) — it used to default open, which,
+ * combined with a small caption as the only "this expands" cue, wasn't
+ * obviously a button. The whole card is now the button, with a clear
+ * chevron + label that both change on click.
  */
-export function MonitorProjectsBanner({ upcoming, fewPermits }: Props) {
-  const [openBucket, setOpenBucket] = useState<BucketKey | null>('upcoming')
-
-  const buckets: { key: BucketKey; title: string; caption: string; bucket: MonitorBucket; tone: string }[] = [
-    {
-      key: 'upcoming',
-      title: 'Próximos a iniciar',
-      caption: 'Inician construcción en los próximos 3 meses',
-      bucket: upcoming,
-      tone: 'monitor-card--urgent',
-    },
-    {
-      key: 'fewPermits',
-      title: 'Menos de 3 permisos',
-      caption: 'No iniciaron construcción y les quedan 1 o 2 permisos pendientes',
-      bucket: fewPermits,
-      tone: 'monitor-card--later',
-    },
-  ]
+export function MonitorProjectsBanner({ upcoming }: Props) {
+  const [abierto, setAbierto] = useState(false)
 
   return (
     <div className="panel">
@@ -48,44 +33,36 @@ export function MonitorProjectsBanner({ upcoming, fewPermits }: Props) {
       </div>
 
       <div className="panel__cuerpo">
-        <div className="monitor-grid">
-          {buckets.map(({ key, title, caption, bucket, tone }) => (
-            <button
-              key={key}
-              type="button"
-              className={`monitor-card ${tone} ${openBucket === key ? 'monitor-card--open' : ''}`}
-              onClick={() => setOpenBucket(openBucket === key ? null : key)}
-              aria-expanded={openBucket === key}
-            >
-              <div className="monitor-card__title">{title}</div>
-              <div className="monitor-card__caption">{caption}</div>
-              <div className="monitor-card__count">{formatNumber(bucket.projectCount)}</div>
-              <dl className="monitor-card__stats">
-                <div>
-                  <dt>Inversión</dt>
-                  <dd>{formatMmusd(bucket.investmentMmusd)}</dd>
-                </div>
-                <div>
-                  <dt>Empleo constr.</dt>
-                  <dd>{formatNumber(bucket.constructionJobs)}</dd>
-                </div>
-                <div>
-                  <dt>Empleo oper.</dt>
-                  <dd>{formatNumber(bucket.operationJobs)}</dd>
-                </div>
-              </dl>
-              <div className="monitor-card__toggle">
-                {openBucket === key ? 'Ocultar proyectos' : 'Ver proyectos'}
-              </div>
-            </button>
-          ))}
-        </div>
+        <button
+          type="button"
+          className={`monitor-card monitor-card--urgent ${abierto ? 'monitor-card--open' : ''}`}
+          onClick={() => setAbierto((v) => !v)}
+          aria-expanded={abierto}
+        >
+          <div className="monitor-card__title">Próximos a iniciar</div>
+          <div className="monitor-card__caption">Inician construcción en los próximos 6 meses</div>
+          <div className="monitor-card__count">{formatNumber(upcoming.projectCount)}</div>
+          <dl className="monitor-card__stats">
+            <div>
+              <dt>Inversión</dt>
+              <dd>{formatMmusd(upcoming.investmentMmusd)}</dd>
+            </div>
+            <div>
+              <dt>Empleo constr.</dt>
+              <dd>{formatNumber(upcoming.constructionJobs)}</dd>
+            </div>
+            <div>
+              <dt>Empleo oper.</dt>
+              <dd>{formatNumber(upcoming.operationJobs)}</dd>
+            </div>
+          </dl>
+          <div className="monitor-card__toggle">
+            <span className="monitor-card__toggle-flecha">{abierto ? '▲' : '▼'}</span>
+            {abierto ? 'Ocultar proyectos' : 'Ver proyectos'}
+          </div>
+        </button>
 
-        {openBucket && (
-          <ProjectList
-            projects={buckets.find((b) => b.key === openBucket)!.bucket.projects}
-          />
-        )}
+        {abierto && <ProjectList projects={upcoming.projects} />}
       </div>
     </div>
   )

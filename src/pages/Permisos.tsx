@@ -53,7 +53,6 @@ export function Permisos() {
           <div className="celda-principal truncar">{p.nombre}</div>
           <div className="celda-secundaria">
             <IdExcel valor={p.id_excel} />
-            {p.critico && <span className="badge badge--critico-flag" style={{ marginLeft: 6 }}>Crítico</span>}
           </div>
         </>
       ),
@@ -85,6 +84,16 @@ export function Permisos() {
       titulo: 'Estado',
       ordenable: true,
       render: (p) => <EstadoBadge valor={p.estado} />,
+    },
+    {
+      clave: 'habilitante_construccion',
+      titulo: 'Habilitante',
+      render: (p) =>
+        p.habilitante_construccion ? (
+          <span className="badge badge--info">Sí</span>
+        ) : (
+          <span className="texto-tenue">No</span>
+        ),
     },
     {
       clave: 'fecha_ingreso',

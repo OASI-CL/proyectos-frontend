@@ -1,29 +1,35 @@
 import { useNavigate } from 'react-router-dom'
 import { formatDate, formatMmusd, formatNumber, formatText } from '../../../lib/formatters'
-import { PERMIT_STATUS_LABELS } from '../constants'
+import { PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_TEXT } from '../constants'
 import type { CriticalPermit } from '../types'
 
 /**
- * "Permisos críticos" (README_dashboard section 11).
+ * "Permisos habilitantes pendientes" (README_dashboard section 11).
  *
- * Overdue permits, but ordered by real urgency: an overdue permit blocking a
- * project whose construction starts within 3 months comes first (flagged
- * "Bloquea inicio"), then the longest overdue ones.
+ * Every PENDING permit marked as habilitante de construcción — the only
+ * real "this one matters more" flag OASI has (`critico` comes 100% empty
+ * from the source spreadsheet, so it's never used for this). A resolved
+ * habilitante isn't waiting on anything, so it doesn't belong in a "what
+ * needs attention" list. Both on-time and overdue pending permits show, not
+ * just the overdue ones, but ranked so what needs attention first surfaces
+ * first — blocking a project whose construction starts within 3 months
+ * (flagged "Bloquea inicio"), then overdue, then the rest.
  */
 export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }) {
   const navigate = useNavigate()
   const blocking = permits.filter((permit) => permit.priority === 'high').length
+  const overdue = permits.filter((permit) => permit.trackingStatus === 'overdue').length
 
   return (
     <div className="panel critical-panel">
       <div className="panel__header">
-        <h2>Permisos críticos</h2>
+        <h2>Permisos habilitantes pendientes</h2>
         <span className="texto-sm texto-tenue">
           {permits.length > 0
-            ? `${formatNumber(permits.length)} permisos atrasados con mayor prioridad${
-                blocking > 0 ? `, ${blocking} bloquean un inicio de construcción` : ''
-              }`
-            : 'Sin permisos atrasados en el universo filtrado'}
+            ? `${formatNumber(permits.length)} permisos habilitantes pendientes en el universo filtrado${
+                overdue > 0 ? `, ${formatNumber(overdue)} atrasados` : ''
+              }${blocking > 0 ? `, ${formatNumber(blocking)} bloquean un inicio de construcción` : ''}`
+            : 'Sin permisos habilitantes pendientes en el universo filtrado'}
         </span>
       </div>
 
@@ -32,7 +38,7 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
           <div className="estado-caja">
             <div className="estado-caja__titulo">Nada que priorizar</div>
             <div className="estado-caja__texto">
-              Ningún permiso del universo filtrado está atrasado.
+              Ningún permiso habilitante pendiente en el universo filtrado.
             </div>
           </div>
         ) : (
@@ -64,9 +70,6 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
                         {permit.priority === 'high' && (
                           <span className="badge badge--critico">Bloquea inicio</span>
                         )}
-                        {permit.isCritical && (
-                          <span className="badge badge--critico-flag">Crítico</span>
-                        )}
                       </div>
                     </td>
                     <td>
@@ -75,14 +78,25 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
                     </td>
                     <td className="nowrap">{permit.agency}</td>
                     <td>
-                      <span className="badge badge--critico">
+                      {/* Colour by actual status now that pending/resolved habilitantes
+                          show here too — badge--critico (always red) made sense when
+                          every row was overdue, not anymore. */}
+                      <span
+                        className="badge"
+                        style={{
+                          background: PERMIT_STATUS_FILL[permit.trackingStatus],
+                          color: PERMIT_STATUS_TEXT[permit.trackingStatus],
+                        }}
+                      >
                         {PERMIT_STATUS_LABELS[permit.trackingStatus]}
                       </span>
                     </td>
                     <td className="der">
-                      <strong style={{ color: 'var(--rojo)' }}>
-                        {formatNumber(permit.overdueDays)}
-                      </strong>
+                      {permit.overdueDays != null ? (
+                        <strong style={{ color: 'var(--rojo)' }}>{formatNumber(permit.overdueDays)}</strong>
+                      ) : (
+                        <span className="texto-tenue">—</span>
+                      )}
                     </td>
                     <td className="der nowrap">
                       {permit.expectedResolutionOn ? (

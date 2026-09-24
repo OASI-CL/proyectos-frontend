@@ -1,6 +1,7 @@
 import { useAuth } from '../../hooks/useAuth'
 import { Cargando, ErrorCaja } from '../../components/Estados'
-import { useDashboardFilters } from './useDashboardFilters'
+import { useMemo } from 'react'
+import { useDashboardFilters, type DashboardFilters } from './useDashboardFilters'
 import { useCatalog, useDashboardData } from './useDashboardData'
 import { FilterBar } from './components/FilterBar'
 import { ActiveFilters } from './components/ActiveFilters'
@@ -12,6 +13,7 @@ import {
   RcaStatusChart,
 } from './components/ProjectCharts'
 import { ConstructionTimeline } from './components/ConstructionTimeline'
+import { ProjectsMap } from './components/ProjectsMap'
 import { MonitorProjectsBanner } from './components/MonitorProjectsBanner'
 import {
   PermitsByAgencyChart,
@@ -36,11 +38,25 @@ import { CriticalPermitsBanner } from './components/CriticalPermitsBanner'
  *     order in README_dashboard section 6 (region first, then agency below).
  */
 export function Dashboard() {
-  const { rol, esEmpresa } = useAuth()
-  const { filters, setFilter, toggleFilter, clearFilters, queryString, activeCount } =
-    useDashboardFilters()
-
+  const { rol, esEmpresa, usuario } = useAuth()
   const { data: catalog } = useCatalog()
+
+  // A region user only ever sees its region, an organismo user only its
+  // agency (and that agency's ministry): those filters are fixed.
+  const locked = useMemo<DashboardFilters>(() => {
+    if (rol === 'region' && usuario?.region) return { region: usuario.region }
+    if (rol === 'organismo' && usuario?.organismoId) {
+      const agency = catalog?.agencies.find((a) => a.id === usuario.organismoId)
+      return {
+        agencyId: String(usuario.organismoId),
+        ...(agency ? { ministryId: String(agency.ministryId) } : {}),
+      }
+    }
+    return {}
+  }, [rol, usuario, catalog])
+
+  const { filters, setFilter, toggleFilter, clearFilters, queryString, activeCount } =
+    useDashboardFilters(locked)
   const { data, loading, isRefreshing, error, reload } = useDashboardData(queryString)
 
   return (
@@ -62,9 +78,14 @@ export function Dashboard() {
         setFilter={setFilter}
         clearFilters={clearFilters}
         activeCount={activeCount}
+        locked={locked}
       />
 
-      <ActiveFilters filters={filters} catalog={catalog} setFilter={setFilter} />
+      <ActiveFilters
+        filters={Object.fromEntries(Object.entries(filters).filter(([key]) => !(key in locked)))}
+        catalog={catalog}
+        setFilter={setFilter}
+      />
 
       {loading && <Cargando />}
       {error && !loading && <ErrorCaja mensaje={error} onReintentar={reload} />}
@@ -72,6 +93,15 @@ export function Dashboard() {
       {data && !error && (
         <div className={isRefreshing ? 'is-refreshing' : undefined}>
           <KpiRow kpis={data.kpis} />
+
+          <div className="mt-24">
+            <ProjectsMap
+              projects={data.mapProjects ?? []}
+              sectors={data.projectsBySector}
+              selectedSector={filters.sector}
+              onSelectSector={(sector) => toggleFilter('sector', sector)}
+            />
+          </div>
 
           {/* ---------------------------- PROYECTOS ---------------------------- */}
           <SectionTitle
@@ -105,10 +135,7 @@ export function Dashboard() {
           </div>
 
           <div className="mt-24">
-            <MonitorProjectsBanner
-              upcoming={data.monitor.upcoming}
-              fewPermits={data.monitor.fewPermits}
-            />
+            <MonitorProjectsBanner upcoming={data.monitor.upcoming} />
           </div>
 
           {/* ----------------------------- PERMISOS ---------------------------- */}

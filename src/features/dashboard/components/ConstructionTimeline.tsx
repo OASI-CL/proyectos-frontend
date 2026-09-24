@@ -1,14 +1,18 @@
 import { useEffect, useMemo, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import {
-  Brush, CartesianGrid, Cell, ComposedChart, ReferenceLine, ResponsiveContainer,
+  CartesianGrid, Cell, ComposedChart, ReferenceLine, ResponsiveContainer,
   Scatter, Tooltip, XAxis, YAxis, ZAxis,
 } from 'recharts'
 import { ChartCard } from './ChartCard'
 import { pickChartRow } from './chartEvents'
-import { CHART_GRID, PROJECT_STATUS_FILL, RCA_STATUS_LABELS } from '../constants'
+import { AXIS_TICK, CHART_GRID, PROJECT_STATUS_FILL, RCA_STATUS_LABELS } from '../constants'
 import { formatDate, formatMmusd, formatNumber, formatText } from '../../../lib/formatters'
 import type { TimelineProject } from '../types'
+
+const DAY_MS = 24 * 60 * 60 * 1000
+const YEAR_MS = 365 * DAY_MS
+const NAV_HEIGHT = 44
 
 interface Props {
   projects: TimelineProject[]
@@ -41,11 +45,10 @@ function yearTicksFor(minTime: number, maxTime: number): number[] {
  * Sector lanes on the Y axis keep the dots from piling up, and the bubble
  * size carries the investment. Clicking a dot opens the project's page.
  *
- * Pannable/zoomable via the Brush strip below the chart: drag the handles to
- * narrow the range (zoom in), drag the middle of the selection to move it
- * (pan). The Brush's index range is translated into an explicit X-axis
- * domain — letting recharts derive the domain from `dataMin`/`dataMax`
- * ignores the brushed selection and the axis never actually rescales.
+ * Navigation is explicit buttons under the chart: ◀ ▶ move half a window,
+ * + − zoom around the centre, a scroll bar drags the window, "Ver todo"
+ * resets. It replaced recharts' Brush, whose thin handles users found hard to
+ * grab. The window is kept as a time range and passed as the X-axis domain.
  */
 export function ConstructionTimeline({ projects, totalProjects }: Props) {
   const navigate = useNavigate()
@@ -63,19 +66,39 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
     [projects],
   )
 
-  const [range, setRange] = useState<[number, number]>([0, Math.max(points.length - 1, 0)])
+  // Full extent, padded to whole years so the edge dots aren't cut in half.
+  const fullMin = points.length ? new Date(new Date(points[0].x).getFullYear(), 0, 1).getTime() : 0
+  const fullMax = points.length
+    ? new Date(new Date(points[points.length - 1].x).getFullYear() + 1, 0, 1).getTime()
+    : 0
+  const fullSpan = Math.max(fullMax - fullMin, 1)
+
+  const [view, setView] = useState<[number, number]>([fullMin, fullMax])
 
   // Reset the zoom whenever the filtered project set changes underneath it.
   useEffect(() => {
-    setRange([0, Math.max(points.length - 1, 0)])
-  }, [points])
+    setView([fullMin, fullMax])
+  }, [fullMin, fullMax])
+
+  const [visibleMin, visibleMax] = view
+  const span = visibleMax - visibleMin
+  const zoomed = span < fullSpan - 1
+
+  /** Moves the window keeping its width, never past the data. */
+  const moveTo = (start: number) => {
+    const clamped = Math.min(Math.max(start, fullMin), fullMax - span)
+    setView([clamped, clamped + span])
+  }
+  const pan = (direction: -1 | 1) => moveTo(visibleMin + direction * span * 0.5)
+  const zoom = (factor: number) => {
+    const center = (visibleMin + visibleMax) / 2
+    const next = Math.min(fullSpan, Math.max(YEAR_MS, span * factor))
+    const start = Math.min(Math.max(center - next / 2, fullMin), fullMax - next)
+    setView([start, start + next])
+  }
 
   const missing = totalProjects - projects.length
   const lanes = [...new Set(points.map((point) => point.y))].sort()
-
-  const [startIndex, endIndex] = range
-  const visibleMin = points[startIndex]?.x ?? 0
-  const visibleMax = points[endIndex]?.x ?? 0
   const yearTicks = points.length > 0 ? yearTicksFor(visibleMin, visibleMax) : []
 
   if (points.length === 0) {
@@ -97,8 +120,8 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
   return (
     <ChartCard
       title="Línea de tiempo de inicio de construcción"
-      hint="Clic en un punto para abrir la ficha, arrastrá la franja de abajo para moverte o hacer zoom"
-      height={chartAreaHeight + captionHeight}
+      hint="Clic en un punto para abrir la ficha. Usá + / − para acercar y ◀ ▶ para moverte"
+      height={chartAreaHeight + captionHeight + NAV_HEIGHT}
       notice={
         missing > 0 ? (
           <span>
@@ -125,6 +148,7 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
             allowDataOverflow
             scale="time"
             ticks={yearTicks}
+            tick={AXIS_TICK}
             tickFormatter={(value: number) => String(new Date(value).getFullYear())}
           />
           {/* allowDuplicatedCategory={false}: without it recharts pairs the
@@ -135,6 +159,7 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
             dataKey="y"
             width={160}
             interval={0}
+            tick={AXIS_TICK}
             allowDuplicatedCategory={false}
           />
           <ZAxis type="number" dataKey="z" range={[60, 520]} />
@@ -191,25 +216,46 @@ export function ConstructionTimeline({ projects, totalProjects }: Props) {
             ))}
           </Scatter>
 
-          <Brush
-            dataKey="x"
-            height={26}
-            stroke="#006BB9"
-            fill="#D3DEF2"
-            travellerWidth={8}
-            startIndex={startIndex}
-            endIndex={endIndex}
-            onChange={(next) => {
-              if (next.startIndex === undefined || next.endIndex === undefined) return
-              setRange([next.startIndex, next.endIndex])
-            }}
-            tickFormatter={(index: number) => {
-              const point = points[index]
-              return point ? String(new Date(point.x).getFullYear()) : ''
-            }}
-          />
         </ComposedChart>
       </ResponsiveContainer>
+
+      <div className="timeline-nav">
+        <button type="button" className="btn btn--sm btn--secundario" onClick={() => pan(-1)}
+          disabled={visibleMin <= fullMin} aria-label="Mover hacia atrás" title="Mover hacia atrás">
+          ◀
+        </button>
+        <input
+          type="range"
+          className="timeline-nav__barra"
+          min={fullMin}
+          max={Math.max(fullMax - span, fullMin)}
+          step={DAY_MS}
+          value={visibleMin}
+          disabled={!zoomed}
+          onChange={(event) => moveTo(Number(event.target.value))}
+          aria-label="Desplazar la línea de tiempo"
+        />
+        <button type="button" className="btn btn--sm btn--secundario" onClick={() => pan(1)}
+          disabled={visibleMax >= fullMax} aria-label="Mover hacia adelante" title="Mover hacia adelante">
+          ▶
+        </button>
+        <span className="timeline-nav__sep" />
+        <button type="button" className="btn btn--sm btn--secundario" onClick={() => zoom(0.5)}
+          disabled={span <= YEAR_MS} title="Acercar">
+          +
+        </button>
+        <button type="button" className="btn btn--sm btn--secundario" onClick={() => zoom(2)}
+          disabled={!zoomed} title="Alejar">
+          −
+        </button>
+        <button type="button" className="btn btn--sm btn--texto" onClick={() => setView([fullMin, fullMax])}
+          disabled={!zoomed}>
+          Ver todo
+        </button>
+        <span className="texto-sm texto-suave" style={{ marginLeft: 'auto' }}>
+          {formatDate(new Date(visibleMin).toISOString())} – {formatDate(new Date(visibleMax).toISOString())}
+        </span>
+      </div>
     </ChartCard>
   )
 }

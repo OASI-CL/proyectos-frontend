@@ -5,8 +5,8 @@ import {
 import { ChartCard } from './ChartCard'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import {
-  CHART_CURSOR, CHART_GRID, CHART_PRIMARY, CHART_SELECTED,
-  RCA_STATUS_FILL, RCA_STATUS_LABELS, RCA_STATUS_STROKE,
+  AXIS_TICK, CHART_CURSOR, CHART_GRID, CHART_PRIMARY, CHART_SELECTED,
+  RCA_STATUS_FILL, RCA_STATUS_LABELS, RCA_STATUS_STROKE, sectorColor,
 } from '../constants'
 import { formatMmusd, formatNumber } from '../../../lib/formatters'
 import type { RcaStatus, RcaStatusRow, RegionProjectRow, SectorProjectRow } from '../types'
@@ -32,10 +32,10 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
       height={PROJECT_CHART_HEIGHT}
     >
       <ResponsiveContainer width="100%" height="100%">
-        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }}>
+        <BarChart data={rows} margin={{ top: 4, right: 8, left: 0, bottom: 56 }} barCategoryGap="6%">
           <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
-          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} />
-          <YAxis allowDecimals={false} />
+          <XAxis dataKey="region" angle={-38} textAnchor="end" interval={0} height={70} tick={AXIS_TICK} />
+          <YAxis allowDecimals={false} tick={AXIS_TICK} />
           <Tooltip
             cursor={{ fill: CHART_CURSOR, opacity: 0.4 }}
             content={({ active, payload }) => {
@@ -55,7 +55,6 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
           <Bar
             dataKey="projectCount"
             name="Proyectos"
-            radius={[3, 3, 0, 0]}
             onClick={(event) => {
               const row = pickChartRow<RegionProjectRow>(event, 'region')
               if (row) onSelect(row.region)
@@ -153,49 +152,42 @@ interface TreemapCellProps {
   colors?: Map<string, string>
 }
 
-/**
- * One solid colour per sector. All dark enough for white text to stay
- * legible. There are 13 colours, one more than the sector catalog has rows.
- */
-const SECTOR_PALETTE = [
-  '#1F4E79', '#2E7D32', '#C0504D', '#7B3F99', '#D17A00',
-  '#00838F', '#8D6E63', '#AD1457', '#546E7A', '#5D8C1F',
-  '#3949AB', '#6D4C41', '#00695C',
-]
-
-/**
- * Colours go by alphabetical order of the sector name, not by size, so a
- * sector keeps its colour when a filter changes the ranking. No two sectors
- * ever share a colour.
- */
+/** Sector colours come from constants.ts (OASI's slide palette), shared with the map. */
 function buildSectorColors(sectors: string[]): Map<string, string> {
-  const sorted = [...new Set(sectors)].sort((a, b) => a.localeCompare(b, 'es'))
-  return new Map(sorted.map((s, i) => [s, SECTOR_PALETTE[i % SECTOR_PALETTE.length]]))
+  return new Map(sectors.map((s) => [s, sectorColor(s)]))
 }
 
 /**
  * Custom cell renderer for the sector treemap: solid colour per sector,
  * sector name and % inside when the box is big enough.
  *
- * Text is drawn without opacity and with a thin dark halo
- * (`paintOrder: stroke`). The previous semi-transparent fills blurred the
- * white labels.
+ * Plain white text, no shadow/outline/filter — every sector colour in the
+ * palette is dark enough for it to read cleanly on its own; anything added
+ * on top (a stroke, a drop-shadow) just blurred it.
+ *
+ * The treemap layout gives x/y/width/height as floats (e.g. 373.428571px):
+ * text placed at a fractional position gets anti-aliased across two
+ * pixels instead of drawn crisply on one, which is what actually reads as
+ * "blurry" — not a shadow or a font issue. Rounding every coordinate to a
+ * whole pixel before drawing anything fixes that.
  */
 function TreemapCell(props: TreemapCellProps) {
-  const { x = 0, y = 0, width = 0, height = 0, sector, share = 0, selected, onSelect, colors } = props
+  const {
+    x: xRaw = 0, y: yRaw = 0, width: widthRaw = 0, height: heightRaw = 0,
+    sector, share = 0, selected, onSelect, colors,
+  } = props
   if (!sector) return null
+
+  const x = Math.round(xRaw)
+  const y = Math.round(yRaw)
+  const width = Math.round(widthRaw)
+  const height = Math.round(heightRaw)
 
   const isSelected = selected === sector
   const dimmed = selected !== undefined && !isSelected
   const percentLabel = `${Math.round(share * 100)}%`
   const canShowLabel = width > 56 && height > 34
   const canShowPercent = width > 56 && height > 50
-  const textStyle = {
-    paintOrder: 'stroke' as const,
-    stroke: 'rgba(0,0,0,0.35)',
-    strokeWidth: 2,
-    textRendering: 'geometricPrecision' as const,
-  }
 
   return (
     <g
@@ -213,12 +205,12 @@ function TreemapCell(props: TreemapCellProps) {
         strokeWidth={isSelected ? 4 : 2}
       />
       {canShowLabel && (
-        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={600} fill="#fff" style={textStyle}>
+        <text x={x + 8} y={y + 19} fontSize={13} fontWeight={150} fill="#fff">
           {truncateLabel(sector, Math.max(8, Math.floor(width / 7.5)))}
         </text>
       )}
       {canShowPercent && (
-        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={700} fill="#fff" style={textStyle}>
+        <text x={x + 8} y={y + 39} fontSize={17} fontWeight={150} fill="#fff">
           {percentLabel}
         </text>
       )}

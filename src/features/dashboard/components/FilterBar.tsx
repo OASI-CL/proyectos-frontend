@@ -10,6 +10,8 @@ interface Props {
   setFilter: (key: FilterKey, value: string | null) => void
   clearFilters: () => void
   activeCount: number
+  /** Filters fixed by the user's scope: shown disabled, with a lock. */
+  locked?: DashboardFilters
 }
 
 /**
@@ -19,8 +21,9 @@ interface Props {
  * The options of each dropdown are narrowed by the other active filters
  * (see useFilterOptions).
  */
-export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCount }: Props) {
+export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCount, locked = {} }: Props) {
   const options = useFilterOptions(catalog, filters)
+  const isLocked = (key: FilterKey) => key in locked
 
   return (
     <div className="panel filter-bar">
@@ -54,6 +57,7 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
             onChange={(value) => setFilter('ministryId', value)}
             placeholder="Todos"
             options={options.ministries.map((m) => ({ value: String(m.id), label: m.name }))}
+            locked={isLocked('ministryId')}
           />
 
           <Select
@@ -63,6 +67,7 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
             onChange={(value) => setFilter('agencyId', value)}
             placeholder="Todos"
             options={options.agencies.map((a) => ({ value: String(a.id), label: a.name }))}
+            locked={isLocked('agencyId')}
           />
 
           <Select
@@ -72,6 +77,7 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
             onChange={(value) => setFilter('region', value)}
             placeholder="Todas"
             options={options.regions.map((r) => ({ value: r, label: r }))}
+            locked={isLocked('region')}
           />
 
           <Select
@@ -177,20 +183,30 @@ interface SelectProps {
   placeholder: string
   options: { value: string; label: string }[]
   onChange: (value: string | null) => void
+  locked?: boolean
 }
 
-function Select({ id, label, value, placeholder, options, onChange }: SelectProps) {
+function Select({ id, label, value, placeholder, options, onChange, locked }: SelectProps) {
+  // A locked value may not be among the narrowed options; keep it visible anyway.
+  const shown = locked && value && !options.some((o) => o.value === value)
+    ? [...options, { value, label: value }]
+    : options
   return (
     <div className="campo">
-      <label className="campo__label" htmlFor={id}>{label}</label>
+      <label className="campo__label" htmlFor={id}>
+        {label}
+        {locked && <span className="texto-tenue" title="Fijo según tu cuenta"> 🔒</span>}
+      </label>
       <select
         id={id}
         className="select"
         value={value}
+        disabled={locked}
+        title={locked ? 'Fijo según tu cuenta' : undefined}
         onChange={(event) => onChange(event.target.value || null)}
       >
         <option value="">{placeholder}</option>
-        {options.map((option) => (
+        {shown.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
           </option>
