@@ -1,7 +1,7 @@
 import 'leaflet/dist/leaflet.css'
-import { useMemo } from 'react'
+import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
-import { CircleMarker, MapContainer, TileLayer, Tooltip as MapTooltip } from 'react-leaflet'
+import { CircleMarker, MapContainer, TileLayer, Tooltip as MapTooltip, useMap } from 'react-leaflet'
 import { Bar, BarChart, CartesianGrid, Cell, LabelList, ResponsiveContainer, Tooltip, XAxis, YAxis } from 'recharts'
 import { pickChartRow, truncateLabel } from './chartEvents'
 import { AXIS_TICK, CHART_GRID, SECTOR_NONE_COLOR, sectorColor } from '../constants'
@@ -57,14 +57,41 @@ function radiusFor(investment: number | null) {
   return Math.min(22, 4 + Math.sqrt(Math.max(0, investment ?? 0)) * 0.3)
 }
 
+const CENTRO_CHILE: [number, number] = [-36.5, -71]
+const ZOOM_CHILE = 4
+/** Close enough to see a region's dots spread out without leaving it half off-screen. */
+const ZOOM_REGION = 7
+
+/**
+ * No-render helper: react-leaflet's <MapContainer center/zoom> props only set
+ * the INITIAL view, they don't move the map on prop changes afterwards (the
+ * library says so explicitly). Panning/zooming after mount needs the map
+ * instance itself, which only exists inside the map's own React tree — hence
+ * a child component that calls useMap().
+ */
+function VistaSegunRegion({ region }: { region?: string }) {
+  const map = useMap()
+  useEffect(() => {
+    const punto = region ? REGION_POINT[region] : undefined
+    if (punto) {
+      map.flyTo(punto, ZOOM_REGION, { duration: 0.8 })
+    } else {
+      map.flyTo(CENTRO_CHILE, ZOOM_CHILE, { duration: 0.8 })
+    }
+  }, [region, map])
+  return null
+}
+
 interface Props {
   projects: MapProject[]
   sectors: SectorProjectRow[]
   selectedSector?: string
   onSelectSector: (sector: string) => void
+  /** Filtro de región activo del dashboard: si tiene punto de referencia, el mapa hace zoom ahí. */
+  selectedRegion?: string
 }
 
-export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector }: Props) {
+export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector, selectedRegion }: Props) {
   const navigate = useNavigate()
 
   const placed = useMemo(
@@ -224,8 +251,8 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
 
           <div className="mapa-sector__mapa">
             <MapContainer
-              center={[-36.5, -71]}
-              zoom={4}
+              center={CENTRO_CHILE}
+              zoom={ZOOM_CHILE}
               minZoom={3}
               scrollWheelZoom={false}
               style={{ height: '100%', width: '100%', borderRadius: 6 }}
@@ -234,6 +261,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
                 attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors'
                 url="https://tile.openstreetmap.org/{z}/{x}/{y}.png"
               />
+              <VistaSegunRegion region={selectedRegion} />
               {placed.map((p) => (
                 <CircleMarker
                   key={p.id}

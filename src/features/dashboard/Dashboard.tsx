@@ -100,6 +100,7 @@ export function Dashboard() {
               sectors={data.projectsBySector}
               selectedSector={filters.sector}
               onSelectSector={(sector) => toggleFilter('sector', sector)}
+              selectedRegion={filters.region}
             />
           </div>
 
