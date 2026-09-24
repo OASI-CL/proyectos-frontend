@@ -135,10 +135,7 @@ export function Dashboard() {
           </div>
 
           <div className="mt-24">
-            <MonitorProjectsBanner
-              upcoming={data.monitor.upcoming}
-              fewPermits={data.monitor.fewPermits}
-            />
+            <MonitorProjectsBanner upcoming={data.monitor.upcoming} />
           </div>
 
           {/* ----------------------------- PERMISOS ---------------------------- */}

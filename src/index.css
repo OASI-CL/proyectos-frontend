@@ -873,6 +873,8 @@ a:hover { text-decoration: underline; }
    Solid + coloured + tinted background when open, so "this one is pressed"
    is obvious at a glance and not just a faint shadow. */
 .monitor-card {
+  display: block;
+  width: 100%;
   text-align: left;
   font-family: inherit;
   border: 1.5px dashed var(--borde-fuerte);
@@ -923,6 +925,7 @@ a:hover { text-decoration: underline; }
   font-variant-numeric: tabular-nums;
 }
 
+/* A pill, not just coloured text — reads unmistakably as a control, not a caption. */
 .monitor-card__toggle {
   margin-top: 12px;
   font-size: 12.5px;
@@ -930,8 +933,12 @@ a:hover { text-decoration: underline; }
   color: var(--azul);
   display: inline-flex;
   align-items: center;
-  gap: 5px;
+  gap: 6px;
+  padding: 5px 12px;
+  border-radius: 999px;
+  background: var(--azul-palido);
 }
+.monitor-card--open .monitor-card__toggle { background: var(--azul); color: #fff; }
 .monitor-card__toggle-flecha { font-size: 9px; }
 
 /* --- Critical permits --- */
