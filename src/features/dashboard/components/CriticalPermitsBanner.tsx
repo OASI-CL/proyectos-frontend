@@ -4,11 +4,14 @@ import { PERMIT_STATUS_LABELS } from '../constants'
 import type { CriticalPermit } from '../types'
 
 /**
- * "Permisos críticos" (README_dashboard section 11).
+ * "Permisos habilitantes atrasados" (README_dashboard section 11).
  *
- * Overdue permits, but ordered by real urgency: an overdue permit blocking a
- * project whose construction starts within 3 months comes first (flagged
- * "Bloquea inicio"), then the longest overdue ones.
+ * Overdue permits, restricted to those marked as habilitante de construcción
+ * — the only real "this one matters more" flag OASI has (`critico` comes
+ * 100% empty from the source spreadsheet, so it's never used for this).
+ * Ordered by real urgency: one blocking a project whose construction starts
+ * within 3 months comes first (flagged "Bloquea inicio"), then the longest
+ * overdue ones.
  */
 export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }) {
   const navigate = useNavigate()
@@ -17,13 +20,13 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
   return (
     <div className="panel critical-panel">
       <div className="panel__header">
-        <h2>Permisos críticos</h2>
+        <h2>Permisos habilitantes atrasados</h2>
         <span className="texto-sm texto-tenue">
           {permits.length > 0
-            ? `${formatNumber(permits.length)} permisos atrasados con mayor prioridad${
+            ? `${formatNumber(permits.length)} permisos habilitantes atrasados, con mayor prioridad primero${
                 blocking > 0 ? `, ${blocking} bloquean un inicio de construcción` : ''
               }`
-            : 'Sin permisos atrasados en el universo filtrado'}
+            : 'Sin permisos habilitantes atrasados en el universo filtrado'}
         </span>
       </div>
 
@@ -32,7 +35,7 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
           <div className="estado-caja">
             <div className="estado-caja__titulo">Nada que priorizar</div>
             <div className="estado-caja__texto">
-              Ningún permiso del universo filtrado está atrasado.
+              Ningún permiso habilitante del universo filtrado está atrasado.
             </div>
           </div>
         ) : (

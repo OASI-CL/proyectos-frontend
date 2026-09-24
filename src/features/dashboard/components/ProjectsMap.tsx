@@ -78,9 +78,15 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
   )
   const unplaced = projects.length - placed.length
 
-  const bars = [...sectors]
+  const investmentBars = [...sectors]
     .map((s) => ({ ...s, investmentMmusd: Number(s.investmentMmusd) }))
     .sort((a, b) => a.investmentMmusd - b.investmentMmusd)
+
+  // Total jobs (construction + operation) per sector, same sort direction as
+  // the investment chart so both read the same way (smallest to largest).
+  const employmentBars = [...sectors]
+    .map((s) => ({ ...s, jobs: s.constructionJobs + s.operationJobs }))
+    .sort((a, b) => a.jobs - b.jobs)
 
   return (
     <div className="panel">
@@ -92,11 +98,74 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
       </div>
       <div className="panel__cuerpo">
         <div className="mapa-sector">
-          <div className="mapa-sector__izq">
-            <div className="mapa-sector__titulo">Inversión por sector (MMUSD)</div>
-            <div style={{ height: 380 }}>
+          <div className="mapa-sector__col">
+            <div className="mapa-sector__titulo">Empleo por sector (personas)</div>
+            <div className="mapa-sector__grafico">
               <ResponsiveContainer width="100%" height="100%">
-                <BarChart data={bars} margin={{ top: 22, right: 8, left: 0, bottom: 40 }} barCategoryGap="6%">
+                <BarChart data={employmentBars} margin={{ top: 22, right: 8, left: 0, bottom: 40 }} barCategoryGap="6%">
+                  <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
+                  <XAxis
+                    dataKey="sector"
+                    interval={0}
+                    angle={-38}
+                    textAnchor="end"
+                    height={70}
+                    tick={AXIS_TICK}
+                    tickFormatter={(v: string) => truncateLabel(v, 16)}
+                  />
+                  <YAxis
+                    tickFormatter={(v: number) => (v >= 1000 ? `${Math.round(v / 1000)}K` : String(v))}
+                    width={40}
+                    tick={AXIS_TICK}
+                  />
+                  <Tooltip
+                    cursor={{ fill: '#EEF2F8' }}
+                    content={({ active, payload }) => {
+                      if (!active || !payload?.length) return null
+                      const row = payload[0].payload as SectorProjectRow & { jobs: number }
+                      return (
+                        <div className="tooltip-custom">
+                          <div className="tooltip-custom__titulo">{row.sector}</div>
+                          <div>Empleo: <strong>{formatNumber(row.jobs)}</strong></div>
+                          <div>Empleo constr.: <strong>{formatNumber(row.constructionJobs)}</strong></div>
+                          <div>Empleo oper.: <strong>{formatNumber(row.operationJobs)}</strong></div>
+                          <div>Proyectos: <strong>{formatNumber(row.projectCount)}</strong></div>
+                        </div>
+                      )
+                    }}
+                  />
+                  <Bar
+                    dataKey="jobs"
+                    style={{ cursor: 'pointer' }}
+                    onClick={(event) => {
+                      const row = pickChartRow<SectorProjectRow>(event, 'sector')
+                      if (row) onSelectSector(row.sector)
+                    }}
+                  >
+                    {employmentBars.map((row) => (
+                      <Cell
+                        key={row.sector}
+                        fill={sectorColor(row.sector)}
+                        fillOpacity={selectedSector && selectedSector !== row.sector ? 0.35 : 1}
+                      />
+                    ))}
+                    <LabelList
+                      dataKey="jobs"
+                      position="top"
+                      fontSize={11}
+                      formatter={(v: unknown) => formatNumber(Math.round(Number(v)))}
+                    />
+                  </Bar>
+                </BarChart>
+              </ResponsiveContainer>
+            </div>
+          </div>
+
+          <div className="mapa-sector__col">
+            <div className="mapa-sector__titulo">Inversión por sector (MMUSD)</div>
+            <div className="mapa-sector__grafico">
+              <ResponsiveContainer width="100%" height="100%">
+                <BarChart data={investmentBars} margin={{ top: 22, right: 8, left: 0, bottom: 40 }} barCategoryGap="6%">
                   <CartesianGrid strokeDasharray="3 3" stroke={CHART_GRID} vertical={false} />
                   <XAxis
                     dataKey="sector"
@@ -134,7 +203,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector 
                       if (row) onSelectSector(row.sector)
                     }}
                   >
-                    {bars.map((row) => (
+                    {investmentBars.map((row) => (
                       <Cell
                         key={row.sector}
                         fill={sectorColor(row.sector)}

@@ -680,16 +680,25 @@ a:hover { text-decoration: underline; }
 .timeline-nav__barra { flex: 1; min-width: 120px; accent-color: #006BB9; cursor: grab; }
 .timeline-nav__barra:disabled { cursor: default; opacity: 0.4; }
 
-/* Map + investment-by-sector panel at the top of the dashboard */
+/* Map + employment/investment-by-sector panel at the top of the dashboard.
+   Employment, then investment, then the map — same row, same height (480px)
+   so the three line up. */
 .mapa-sector {
   display: grid;
-  grid-template-columns: minmax(300px, 1fr) minmax(280px, 1fr);
+  grid-template-columns: minmax(240px, 1fr) minmax(240px, 1fr) minmax(300px, 1.2fr);
   gap: 20px;
 }
-@media (max-width: 800px) {
+@media (max-width: 1100px) {
+  .mapa-sector { grid-template-columns: 1fr 1fr; }
+  .mapa-sector__mapa { grid-column: 1 / -1; }
+}
+@media (max-width: 700px) {
   .mapa-sector { grid-template-columns: 1fr; }
+  .mapa-sector__mapa { grid-column: auto; }
 }
 .mapa-sector__mapa { height: 480px; position: relative; z-index: 0; }
+.mapa-sector__col { display: flex; flex-direction: column; height: 480px; }
+.mapa-sector__grafico { flex: 1; min-height: 0; }
 .mapa-sector__titulo { font-size: 14px; font-weight: 600; color: var(--texto); margin-bottom: 8px; }
 .mapa-sector__leyenda { display: flex; flex-wrap: wrap; gap: 6px 16px; margin-top: 12px; }
 .mapa-sector__leyenda span { display: inline-flex; align-items: center; gap: 6px; }

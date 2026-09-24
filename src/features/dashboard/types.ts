@@ -119,7 +119,6 @@ export interface CriticalPermit {
   daysInProcess: number | null
   expectedResolutionOn: string | null
   investmentMmusd: number | null
-  isCritical: boolean
   constructionStartOn: string | null
   priority: 'high' | 'normal'
 }
