@@ -4,15 +4,16 @@ import { PERMIT_STATUS_FILL, PERMIT_STATUS_LABELS, PERMIT_STATUS_TEXT } from '..
 import type { CriticalPermit } from '../types'
 
 /**
- * "Permisos habilitantes" (README_dashboard section 11).
+ * "Permisos habilitantes pendientes" (README_dashboard section 11).
  *
- * Every permit marked as habilitante de construcción — the only real "this
- * one matters more" flag OASI has (`critico` comes 100% empty from the
- * source spreadsheet, so it's never used for this). Not just the overdue
- * ones: pending and resolved habilitantes show too, but ranked so the ones
- * that need attention surface first — blocking a project whose construction
- * starts within 3 months (flagged "Bloquea inicio"), then overdue, then
- * pending, then resolved.
+ * Every PENDING permit marked as habilitante de construcción — the only
+ * real "this one matters more" flag OASI has (`critico` comes 100% empty
+ * from the source spreadsheet, so it's never used for this). A resolved
+ * habilitante isn't waiting on anything, so it doesn't belong in a "what
+ * needs attention" list. Both on-time and overdue pending permits show, not
+ * just the overdue ones, but ranked so what needs attention first surfaces
+ * first — blocking a project whose construction starts within 3 months
+ * (flagged "Bloquea inicio"), then overdue, then the rest.
  */
 export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }) {
   const navigate = useNavigate()
@@ -22,13 +23,13 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
   return (
     <div className="panel critical-panel">
       <div className="panel__header">
-        <h2>Permisos habilitantes</h2>
+        <h2>Permisos habilitantes pendientes</h2>
         <span className="texto-sm texto-tenue">
           {permits.length > 0
-            ? `${formatNumber(permits.length)} permisos habilitantes en el universo filtrado${
+            ? `${formatNumber(permits.length)} permisos habilitantes pendientes en el universo filtrado${
                 overdue > 0 ? `, ${formatNumber(overdue)} atrasados` : ''
               }${blocking > 0 ? `, ${formatNumber(blocking)} bloquean un inicio de construcción` : ''}`
-            : 'Sin permisos habilitantes en el universo filtrado'}
+            : 'Sin permisos habilitantes pendientes en el universo filtrado'}
         </span>
       </div>
 
@@ -37,7 +38,7 @@ export function CriticalPermitsBanner({ permits }: { permits: CriticalPermit[] }
           <div className="estado-caja">
             <div className="estado-caja__titulo">Nada que priorizar</div>
             <div className="estado-caja__texto">
-              Ningún permiso habilitante en el universo filtrado.
+              Ningún permiso habilitante pendiente en el universo filtrado.
             </div>
           </div>
         ) : (
