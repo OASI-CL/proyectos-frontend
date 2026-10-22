@@ -36,14 +36,13 @@ interface StageRow {
 
 interface Table3Row {
   ministry: string
-  total: number
-  inProgress: number
-  resolved: number | null
+  totalAtPrevious: number
+  pendingAtPrevious: number | null
+  resolvedBetween: number | null
+  resolvedTotal: number | null
   progress: number | null
-  resolvedSincePreviousSession: number | null
-  over6Months: number
-  over6MonthsShare: number
-  statutoryDays: number
+  added: number
+  statutoryDays: number | null
 }
 
 interface Table4Row {
@@ -56,6 +55,7 @@ interface Table4Row {
 interface CommitteeTablesData {
   computedOn: string
   baselineDate: string
+  secondBatchDate: string
   currentSession: Session
   previousSession: Session | null
   sessions: Session[]
@@ -64,7 +64,7 @@ interface CommitteeTablesData {
   table21: { rows: StageRow[]; total: StageRow }
   table22: { rows: StageRow[]; total: StageRow }
   table3: { rows: Table3Row[]; total: Table3Row }
-  table4: { rows: Table4Row[]; total: Table4Row }
+  table4: { rows: Table4Row[]; total: Table4Row; pointsGained: (number | null)[] }
   permitsOutsideListedMinistries: number
 }
 
@@ -104,7 +104,10 @@ function Table1({ data }: { data: CommitteeTablesData }) {
     { label: 'Nuevos', key: 'newPermits' },
   ]
   return (
-    <TablePanel title="Tabla 1: proyectos y permisos pendientes por sesión">
+    <TablePanel
+      title="Tabla 1: proyectos y permisos pendientes por sesión"
+      subtitle={`Desde el ${formatDate(data.secondBatchDate)} se suman los proyectos del catastro 2 que siguen activos.`}
+    >
       <table className="tabla committee-tables">
         <thead>
           <tr>
@@ -192,41 +195,43 @@ function StageTable({ title, countLabel, table }: { title: string; countLabel: s
 }
 
 function Table3({ data }: { data: CommitteeTablesData }) {
+  const prev = data.previousSession?.number ?? data.currentSession.number
+  const curr = data.currentSession.number
+  // null = the sheet leaves the cell empty; the first one says "Sin información".
+  const cell = (value: number | null, firstOfRow = false) =>
+    value === null ? (firstOfRow ? <span className="texto-tenue">{NO_DATA}</span> : '') : formatNumber(value)
   const row = (r: Table3Row) => (
     <>
       <td>{r.ministry}</td>
-      <td className="der">{formatNumber(r.total)}</td>
-      <td className="der">{formatNumber(r.inProgress)}</td>
-      <td className="der">{r.resolved === null ? <span className="texto-tenue">{NO_DATA}</span> : formatNumber(r.resolved)}</td>
+      <td className="der">{formatNumber(r.totalAtPrevious)}</td>
+      <td className="der">{cell(r.pendingAtPrevious, true)}</td>
+      <td className="der">{cell(r.resolvedBetween)}</td>
+      <td className="der">{cell(r.resolvedTotal)}</td>
       <td className="der">{r.progress === null ? '' : percent(r.progress)}</td>
-      <td className="der">{r.resolvedSincePreviousSession === null ? '' : formatNumber(r.resolvedSincePreviousSession)}</td>
-      <td className="der">{formatNumber(r.over6Months)}</td>
-      <td className="der">{percent(r.over6MonthsShare)}</td>
-      <td className="der">{formatNumber(r.statutoryDays)}</td>
+      <td className="der committee-tables__added">{formatNumber(r.added)}</td>
+      <td className="der">{cell(r.statutoryDays)}</td>
     </>
   )
   return (
     <TablePanel
       title="Tabla 3: avance y nivel de atraso de permisos por Ministerio"
-      subtitle={`Permisos ingresados hasta la sesión ${data.previousSession?.number ?? data.currentSession.number}, resueltos hasta la sesión ${data.currentSession.number}. No incluye los que se registraron en la sesión ${data.currentSession.number}.`}
+      subtitle={`Permisos ingresados hasta la sesión ${prev}; los registrados en la sesión ${curr} van aparte en "Se añaden".`}
     >
       <table className="tabla committee-tables">
         <thead>
           <tr>
             <th rowSpan={2}>Ministerio</th>
-            <th colSpan={4} className="centro">Permisos totales</th>
-            <th className="der">Resueltos desde</th>
-            <th colSpan={2} className="centro">Permisos +6 meses</th>
+            <th colSpan={2} className="centro">Permisos totales</th>
+            <th colSpan={3} className="centro">Resueltos</th>
+            <th rowSpan={2} className="der">Se añaden<br />(Comité {curr})</th>
             <th rowSpan={2} className="der">Plazo normativo<br />(días prom. ponderado)</th>
           </tr>
           <tr>
+            <th className="der">Totales al Comité {prev}</th>
+            <th className="der">Pendientes al Comité {prev}</th>
+            <th className="der">Entre Comité {prev} y {curr}</th>
             <th className="der">Totales</th>
-            <th className="der">En trámite</th>
-            <th className="der">Resueltos</th>
             <th className="der">% Avance</th>
-            <th className="der">sesión anterior</th>
-            <th className="der">N°</th>
-            <th className="der">%</th>
           </tr>
         </thead>
         <tbody>
@@ -248,7 +253,8 @@ function Table4({ data }: { data: CommitteeTablesData }) {
       <td className="der">{formatNumber(r.total)}</td>
       {r.progressBySession.map((p, i) => (
         <td key={data.sessions[i].number} className="der">
-          {p === null ? (i === 0 ? <span className="texto-tenue">{NO_DATA}</span> : '') : percent(p)}
+          {/* Empty when the ministry has no permits; "Sin información" when the sheet says so */}
+          {p === null ? (i === 0 && r.total > 0 ? <span className="texto-tenue">{NO_DATA}</span> : '') : percent(p)}
         </td>
       ))}
       <td className="der committee-tables__added">{formatNumber(r.added)}</td>
@@ -284,6 +290,17 @@ function Table4({ data }: { data: CommitteeTablesData }) {
         </tbody>
         <tfoot>
           <tr>{row(data.table4.total)}</tr>
+          {/* "Avance en puntos porcentuales": how much the total moved since the previous session */}
+          <tr className="committee-tables__points">
+            <td>Avance en puntos porcentuales</td>
+            <td />
+            {data.table4.pointsGained.map((p, i) => (
+              <td key={data.sessions[i].number} className="der">
+                {p === null ? '' : formatNumber(p, 1)}
+              </td>
+            ))}
+            <td />
+          </tr>
         </tfoot>
       </table>
     </TablePanel>
@@ -299,7 +316,7 @@ export function CommitteeTables() {
         <div className="pagina-header__texto">
           <h1>Tablas del comité</h1>
           <p className="pagina-header__descripcion">
-            Las tablas de la presentación de cada sesión (hoja <strong>"Tablas PPT"</strong> del Excel),
+            Las tablas de la presentación de cada sesión (hoja <strong>"Tablas PPT Actualizada"</strong> del Excel),
             calculadas en vivo con los datos de la base.
           </p>
         </div>
@@ -328,7 +345,7 @@ export function CommitteeTables() {
             {data.permitsOutsideListedMinistries > 0 && (
               <div className="alerta alerta--aviso mt-16">
                 {formatNumber(data.permitsOutsideListedMinistries)} permisos son de ministerios que la planilla no
-                lista en las Tablas 3 y 4 (por ejemplo Medio Ambiente o Transportes), así que no aparecen ahí.
+                lista en las Tablas 3 y 4, así que no aparecen ahí.
               </div>
             )}
           </>

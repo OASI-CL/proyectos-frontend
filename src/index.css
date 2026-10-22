@@ -969,7 +969,14 @@ a:hover { text-decoration: underline; }
   padding: 10px 12px;
   border-top: 2px solid var(--azul);
 }
-/* Table 4: "Se añaden" is a separate block from the per-session % */
+/* Table 4: the "points gained" row sits under the total, lighter */
+.committee-tables tfoot tr.committee-tables__points td {
+  font-weight: 400;
+  background: var(--fondo-panel);
+  color: var(--texto-suave);
+  border-top: 1px solid var(--borde);
+}
+/* Tables 3 and 4: "Se añaden" is a separate block from the rest */
 .committee-tables__added { border-left: 2px solid var(--borde); }
 
 /* ==========================================================================
