@@ -14,6 +14,7 @@ import { PermisoNuevo } from './pages/PermisoNuevo'
 import { Comites } from './pages/Comites'
 import { ComiteDetalle } from './pages/ComiteDetalle'
 import { Organismos } from './pages/Organismos'
+import { CommitteeTables } from './pages/CommitteeTables'
 import { AdminUsuarios } from './pages/AdminUsuarios'
 import { Approvals } from './features/approvals/Approvals'
 
@@ -72,6 +73,7 @@ export default function App() {
 
           <Route path="/comites" element={<Comites />} />
           <Route path="/comites/:numero" element={<ComiteDetalle />} />
+          <Route path="/tablas-comite" element={<CommitteeTables />} />
 
           <Route path="/organismos" element={<Organismos />} />
           <Route path="/aprobaciones" element={<Approvals />} />

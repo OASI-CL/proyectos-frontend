@@ -53,6 +53,14 @@ export const IconoComites = ({ size = 18 }: Props) => (
   </svg>
 )
 
+/** Grid icon for the committee presentation tables ("Tablas PPT"). */
+export const IconTables = ({ size = 18 }: Props) => (
+  <svg {...base(size)} aria-hidden="true">
+    <rect x="3" y="4" width="18" height="16" rx="2" />
+    <path d="M3 9h18M3 14.5h18M9 9v11" />
+  </svg>
+)
+
 export const IconoOrganismos = ({ size = 18 }: Props) => (
   <svg {...base(size)} aria-hidden="true">
     <path d="M3 21h18" />

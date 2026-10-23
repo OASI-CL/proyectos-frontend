@@ -7,7 +7,7 @@ import { ROLE_LABELS } from '../lib/formatters'
 import type { RolUsuario } from '../shared/types'
 import {
   IconoDashboard, IconoProyectos, IconoPermisos, IconoComites,
-  IconoOrganismos, IconoUsuarios, IconoMenu, IconoAprobaciones,
+  IconoOrganismos, IconoUsuarios, IconoMenu, IconoAprobaciones, IconTables,
 } from './Iconos'
 
 /**
@@ -174,6 +174,12 @@ export function Layout() {
             {veComites && (
               <NavLink to="/comites" className={({ isActive }) => `menu__item ${isActive ? 'activo' : ''}`} onClick={cerrarMenu}>
                 <IconoComites /> Comités
+              </NavLink>
+            )}
+            {/* Same audience as Comités: global figures, OASI team only. */}
+            {veComites && (
+              <NavLink to="/tablas-comite" className={({ isActive }) => `menu__item ${isActive ? 'activo' : ''}`} onClick={cerrarMenu}>
+                <IconTables /> Tablas del comité
               </NavLink>
             )}
           </div>

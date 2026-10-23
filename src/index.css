@@ -945,6 +945,41 @@ a:hover { text-decoration: underline; }
 .critical-panel { border-top: 3px solid var(--rojo); }
 
 /* ==========================================================================
+   Committee tables ("Tablas PPT" view, src/pages/CommitteeTables.tsx)
+   ========================================================================== */
+
+.committee-tables__stack { display: flex; flex-direction: column; gap: 20px; margin-top: 16px; }
+.committee-tables__stack > .panel + .panel { margin-top: 0; }
+.committee-tables__title { font-size: 15px; margin: 0; color: var(--azul-oscuro); }
+/* Session date under each column header, e.g. "(14 de mayo)" */
+.committee-tables__date { font-weight: 400; font-size: 11px; color: var(--texto-suave); }
+.committee-tables__summary { margin: 14px 18px 0; }
+.committee-tables--narrow { max-width: 420px; }
+.committee-tables tbody td { vertical-align: middle; }
+/* Numbers and "Sin información" never wrap; the panel scrolls sideways instead */
+.committee-tables td,
+.committee-tables th { white-space: nowrap; }
+/* Table 1: "Proyectos totales" / "Permisos totales" head their group of rows */
+.committee-tables__group td { font-weight: 600; }
+.committee-tables__indent { padding-left: 28px !important; }
+.committee-tables tfoot td {
+  font-weight: 700;
+  background: var(--azul-palido);
+  color: var(--azul-oscuro);
+  padding: 10px 12px;
+  border-top: 2px solid var(--azul);
+}
+/* Table 4: the "points gained" row sits under the total, lighter */
+.committee-tables tfoot tr.committee-tables__points td {
+  font-weight: 400;
+  background: var(--fondo-panel);
+  color: var(--texto-suave);
+  border-top: 1px solid var(--borde);
+}
+/* Tables 3 and 4: "Se añaden" is a separate block from the rest */
+.committee-tables__added { border-left: 2px solid var(--borde); }
+
+/* ==========================================================================
    Responsive
    ========================================================================== */
 
