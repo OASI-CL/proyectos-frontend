@@ -38,11 +38,13 @@ interface Table3Row {
   ministry: string
   totalAtPrevious: number
   pendingAtPrevious: number | null
+  resolvedAtPrevious: number | null
   resolvedBetween: number | null
   resolvedTotal: number | null
   progress: number | null
   added: number
   statutoryDays: number | null
+  noData: boolean
 }
 
 interface Table4Row {
@@ -50,6 +52,13 @@ interface Table4Row {
   total: number
   progressBySession: (number | null)[]
   added: number
+  noData: boolean
+}
+
+interface PriorityGroup {
+  projects: number
+  investmentMmusd: number
+  pendingPermits: number
 }
 
 interface CommitteeTablesData {
@@ -59,6 +68,7 @@ interface CommitteeTablesData {
   currentSession: Session
   previousSession: Session | null
   sessions: Session[]
+  summary: { nearConstruction: PriorityGroup; investmentOrJobs: PriorityGroup }
   table1: Table1Column[]
   table11: { projects: number; investmentMmusd: number; constructionJobs: number }
   table21: { rows: StageRow[]; total: StageRow }
@@ -137,6 +147,22 @@ function Table1({ data }: { data: CommitteeTablesData }) {
   )
 }
 
+/**
+ * The sheet's sentence under Table 1 (B18): priority projects according to
+ * the "Urgencia" column, with their investment and pending permits.
+ */
+function PrioritySummary({ data }: { data: CommitteeTablesData }) {
+  const { nearConstruction: near, investmentOrJobs: inv } = data.summary
+  return (
+    <div className="alerta alerta--info">
+      {formatNumber(near.projects)} proyectos priorizados por proximidad a construir, equivalentes a $
+      {formatNumber(near.investmentMmusd, 0)} MMUSD, con {formatNumber(near.pendingPermits)} permisos pendientes
+      asociados, y {formatNumber(inv.projects)} proyectos priorizados por inversión y/o empleo, equivalentes a $
+      {formatNumber(inv.investmentMmusd, 0)} MMUSD, con {formatNumber(inv.pendingPermits)} permisos pendientes asociados
+    </div>
+  )
+}
+
 function Table11({ data }: { data: CommitteeTablesData }) {
   const t = data.table11
   return (
@@ -144,10 +170,6 @@ function Table11({ data }: { data: CommitteeTablesData }) {
       title="Tabla 1.1: proyectos con 100% de sus trámites con más de 6 meses"
       subtitle={`Calculado a hoy (${formatDate(data.computedOn)}), igual que la planilla.`}
     >
-      <div className="alerta alerta--info committee-tables__summary">
-        {formatNumber(t.projects)} proyectos con 100% de trámites +6 meses, equivalentes a $
-        {formatNumber(Math.trunc(t.investmentMmusd))} MMUSD inversión y {formatNumber(t.constructionJobs)} empleo
-      </div>
       <table className="tabla committee-tables committee-tables--narrow">
         <tbody>
           <tr><td>Cantidad de proyectos</td><td className="der">{formatNumber(t.projects)}</td></tr>
@@ -197,14 +219,16 @@ function StageTable({ title, countLabel, table }: { title: string; countLabel: s
 function Table3({ data }: { data: CommitteeTablesData }) {
   const prev = data.previousSession?.number ?? data.currentSession.number
   const curr = data.currentSession.number
-  // null = the sheet leaves the cell empty; the first one says "Sin información".
-  const cell = (value: number | null, firstOfRow = false) =>
-    value === null ? (firstOfRow ? <span className="texto-tenue">{NO_DATA}</span> : '') : formatNumber(value)
+  // null = the sheet leaves the cell empty.
+  const cell = (value: number | null) => (value === null ? '' : formatNumber(value))
   const row = (r: Table3Row) => (
     <>
       <td>{r.ministry}</td>
       <td className="der">{formatNumber(r.totalAtPrevious)}</td>
-      <td className="der">{cell(r.pendingAtPrevious, true)}</td>
+      <td className="der">
+        {r.noData ? <span className="texto-tenue">{NO_DATA}</span> : cell(r.pendingAtPrevious)}
+      </td>
+      <td className="der">{cell(r.resolvedAtPrevious)}</td>
       <td className="der">{cell(r.resolvedBetween)}</td>
       <td className="der">{cell(r.resolvedTotal)}</td>
       <td className="der">{r.progress === null ? '' : percent(r.progress)}</td>
@@ -222,13 +246,14 @@ function Table3({ data }: { data: CommitteeTablesData }) {
           <tr>
             <th rowSpan={2}>Ministerio</th>
             <th colSpan={2} className="centro">Permisos totales</th>
-            <th colSpan={3} className="centro">Resueltos</th>
+            <th colSpan={4} className="centro">Resueltos</th>
             <th rowSpan={2} className="der">Se añaden<br />(Comité {curr})</th>
             <th rowSpan={2} className="der">Plazo normativo<br />(días prom. ponderado)</th>
           </tr>
           <tr>
             <th className="der">Totales al Comité {prev}</th>
             <th className="der">Pendientes al Comité {prev}</th>
+            <th className="der">Al Comité {prev}</th>
             <th className="der">Entre Comité {prev} y {curr}</th>
             <th className="der">Totales</th>
             <th className="der">% Avance</th>
@@ -253,8 +278,8 @@ function Table4({ data }: { data: CommitteeTablesData }) {
       <td className="der">{formatNumber(r.total)}</td>
       {r.progressBySession.map((p, i) => (
         <td key={data.sessions[i].number} className="der">
-          {/* Empty when the ministry has no permits; "Sin información" when the sheet says so */}
-          {p === null ? (i === 0 && r.total > 0 ? <span className="texto-tenue">{NO_DATA}</span> : '') : percent(p)}
+          {/* "Sin información" where the sheet says so; empty when the ministry has no permits */}
+          {p === null ? (i === 0 && r.noData ? <span className="texto-tenue">{NO_DATA}</span> : '') : percent(p)}
         </td>
       ))}
       <td className="der committee-tables__added">{formatNumber(r.added)}</td>
@@ -335,6 +360,7 @@ export function CommitteeTables() {
 
             <div className="committee-tables__stack">
               <Table1 data={data} />
+              <PrioritySummary data={data} />
               <Table11 data={data} />
               <StageTable title="Tabla 2.1: proyectos totales por etapa" countLabel="Cantidad de proyectos" table={data.table21} />
               <StageTable title="Tabla 2.2: proyectos liberados por etapa" countLabel="Proyectos liberados" table={data.table22} />
