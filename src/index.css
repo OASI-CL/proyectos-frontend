@@ -944,6 +944,12 @@ a:hover { text-decoration: underline; }
 /* --- Critical permits --- */
 .critical-panel { border-top: 3px solid var(--rojo); }
 
+/* --- Interregional projects box (always visible, ignores filters) --- */
+.interregional-panel { border-top: 3px solid var(--azul); }
+.interregional-panel__chevron { display: inline-block; width: 16px; color: var(--azul); }
+.interregional-panel__permits > td { background: #F6F9FD; padding: 14px 18px !important; }
+.interregional-panel__permits .tabla { background: var(--fondo-panel); }
+
 /* ==========================================================================
    Committee tables ("Tablas PPT" view, src/pages/CommitteeTables.tsx)
    ========================================================================== */

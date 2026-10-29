@@ -21,6 +21,7 @@ import {
   PermitStatusDonut,
 } from './components/PermitCharts'
 import { CriticalPermitsBanner } from './components/CriticalPermitsBanner'
+import { InterregionalBox } from './components/InterregionalBox'
 
 /**
  * Monitoring dashboard for investment projects and their permits.
@@ -93,6 +94,14 @@ export function Dashboard() {
       {data && !error && (
         <div className={isRefreshing ? 'is-refreshing' : undefined}>
           <KpiRow kpis={data.kpis} />
+
+          {/* Apart from everything else: same for every role, ignores filters */}
+          <div className="mt-24">
+            <InterregionalBox
+              projects={data.interregional?.projects ?? []}
+              permits={data.interregional?.permits ?? []}
+            />
+          </div>
 
           <div className="mt-24">
             <ProjectsMap
@@ -177,7 +186,8 @@ export function Dashboard() {
           )}
           {rol === 'region' && (
             <div className="alerta alerta--info mt-24">
-              Estás viendo solo los proyectos de tu región, de todos los organismos.
+              Estás viendo solo los proyectos de tu región, de todos los organismos. Los
+              interregionales están en su propia caja, arriba.
             </div>
           )}
           {rol === 'empresa' && (
