@@ -146,14 +146,11 @@ export function PermisoNuevo() {
             </div>
 
             <div className="campo">
-              <label className="campo__label" htmlFor="np-ingreso">Fecha de ingreso *</label>
-              {/* Required: only permits with a filing date are part of the universe
-                  (see db/migrations/0011), so one without it would vanish from the app. */}
+              <label className="campo__label" htmlFor="np-ingreso">Fecha de ingreso</label>
               <input
                 id="np-ingreso"
                 className="input"
                 type="date"
-                required
                 value={String(form.fecha_ingreso ?? '')}
                 onChange={(e) => cambiar('fecha_ingreso', e.target.value)}
               />
