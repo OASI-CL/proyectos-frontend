@@ -123,6 +123,33 @@ export interface CriticalPermit {
   priority: 'high' | 'normal'
 }
 
+/** A project of the "Proyectos interregionales" box (no filters, seen by everyone). */
+export interface InterregionalProject {
+  id: number
+  code: string | null
+  name: string
+  company: string | null
+  sector: string | null
+  projectStatus: string | null
+  investmentMmusd: number
+  constructionJobs: number
+  permitCount: number
+  pendingPermitCount: number
+}
+
+export interface InterregionalPermit {
+  id: number
+  code: string | null
+  name: string
+  projectId: number
+  agency: string
+  status: string
+  /** v_permisos.semaforo: en_plazo | en_alerta | critico | finalizado */
+  trafficLight: string
+  submittedOn: string | null
+  daysInProcess: number | null
+}
+
 export interface DashboardData {
   kpis: DashboardKpis
   projectsByRegion: RegionProjectRow[]
@@ -135,6 +162,7 @@ export interface DashboardData {
   permitsByRegion: RegionPermitRow[]
   permitStatus: PermitStatusRow[]
   criticalPermits: CriticalPermit[]
+  interregional: { projects: InterregionalProject[]; permits: InterregionalPermit[] }
 }
 
 // --- Catalog (`GET /catalog`) -----------------------------------------------
