@@ -1,3 +1,4 @@
+import { isPicked } from '../useDashboardFilters'
 import 'leaflet/dist/leaflet.css'
 import { useEffect, useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
@@ -173,7 +174,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector,
                       <Cell
                         key={row.sector}
                         fill={sectorColor(row.sector)}
-                        fillOpacity={selectedSector && selectedSector !== row.sector ? 0.35 : 1}
+                        fillOpacity={selectedSector && !isPicked(selectedSector, row.sector) ? 0.35 : 1}
                       />
                     ))}
                     <LabelList
@@ -234,7 +235,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector,
                       <Cell
                         key={row.sector}
                         fill={sectorColor(row.sector)}
-                        fillOpacity={selectedSector && selectedSector !== row.sector ? 0.35 : 1}
+                        fillOpacity={selectedSector && !isPicked(selectedSector, row.sector) ? 0.35 : 1}
                       />
                     ))}
                     <LabelList
@@ -271,7 +272,7 @@ export function ProjectsMap({ projects, sectors, selectedSector, onSelectSector,
                     color: '#ffffff',
                     weight: 1,
                     fillColor: sectorColor(p.sector),
-                    fillOpacity: selectedSector && selectedSector !== (p.sector ?? 'Sin sector') ? 0.2 : 0.85,
+                    fillOpacity: selectedSector && !isPicked(selectedSector, p.sector ?? 'Sin sector') ? 0.2 : 0.85,
                   }}
                   eventHandlers={{ click: () => navigate(`/proyectos/${p.id}`) }}
                 >

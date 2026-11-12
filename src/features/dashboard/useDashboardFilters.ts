@@ -29,7 +29,35 @@ export const FILTER_KEYS = [
 
 export type FilterKey = (typeof FILTER_KEYS)[number]
 
+/**
+ * A filter's value as it lives in the URL. Every filter except the two dates
+ * is MULTI-VALUE: several picks of the same filter are joined with
+ * MULTI_VALUE_SEPARATOR ("3|13" = agencies 3 or 13). Same separator as the
+ * backend (models/dashboard.ts). Use `filterValues()` to read them as a list.
+ */
 export type DashboardFilters = Partial<Record<FilterKey, string>>
+
+export const MULTI_VALUE_SEPARATOR = '|'
+
+/** Filters that accept several values at once (all but the date range). */
+export const MULTI_VALUE_KEYS: ReadonlySet<FilterKey> = new Set(
+  FILTER_KEYS.filter((key) => key !== 'startDateFrom' && key !== 'startDateTo'),
+)
+
+/** "a|b" -> ['a', 'b']; undefined/'' -> []. */
+export function filterValues(value: string | undefined): string[] {
+  return value ? value.split(MULTI_VALUE_SEPARATOR).filter(Boolean) : []
+}
+
+/** Is `value` among the picks of a (multi-value) filter? For chart highlighting. */
+export function isPicked(filterValue: string | undefined, value: string | null | undefined): boolean {
+  return value != null && filterValues(filterValue).includes(value)
+}
+
+/** ['a', 'b'] -> "a|b"; [] -> null (= no filter). */
+export function joinFilterValues(values: string[]): string | null {
+  return values.length ? values.join(MULTI_VALUE_SEPARATOR) : null
+}
 
 /**
  * `locked`: filters fixed by the user's scope (a 'region' user's region, an
@@ -59,11 +87,11 @@ export function useDashboardFilters(locked: DashboardFilters = {}) {
           if (value === null || value === '') next.delete(key)
           else next.set(key, value)
 
-          // Picking a narrower scope invalidates the wider picks below it.
-          if (key === 'ministryId') next.delete('agencyId')
-          if (key === 'companyId' || key === 'sector' || key === 'region') {
-            next.delete('projectId')
-          }
+          // Narrowing a wider filter drops the picks below it that no longer
+          // fit. With multi-value filters a whole reset would be annoying
+          // (adding a 2nd ministry shouldn't wipe the agencies), so the
+          // dependent filter is only cleared when the wider one is cleared.
+          if (key === 'ministryId' && (value === null || value === '')) next.delete('agencyId')
           return next
         },
         { replace: true },
@@ -72,12 +100,34 @@ export function useDashboardFilters(locked: DashboardFilters = {}) {
     [setSearchParams, lockedKey],
   )
 
-  /** Click-to-filter: clicking the value that is already active clears it. */
+  /**
+   * Click-to-filter (a chart bar, a donut slice, a checkbox): adds the value
+   * to that filter, or removes it if it was already picked. Single-value
+   * filters (dates) just switch on/off.
+   */
   const toggleFilter = useCallback(
     (key: FilterKey, value: string) => {
-      setFilter(key, filters[key] === value ? null : value)
+      if (key in (JSON.parse(lockedKey) as DashboardFilters)) return
+      // Computed from the URL as it is RIGHT NOW (functional update), not from
+      // the last render: two quick clicks (tick CMN, tick SAG) must add up,
+      // not have the second one overwrite the first.
+      setSearchParams(
+        (previous) => {
+          const next = new URLSearchParams(previous)
+          const current = filterValues(previous.get(key) ?? undefined)
+          const picked = MULTI_VALUE_KEYS.has(key)
+            ? current.includes(value) ? current.filter((v) => v !== value) : [...current, value]
+            : current[0] === value ? [] : [value]
+          const joined = joinFilterValues(picked)
+          if (joined === null) next.delete(key)
+          else next.set(key, joined)
+          if (key === 'ministryId' && joined === null) next.delete('agencyId')
+          return next
+        },
+        { replace: true },
+      )
     },
-    [filters, setFilter],
+    [setSearchParams, lockedKey],
   )
 
   const clearFilters = useCallback(() => {

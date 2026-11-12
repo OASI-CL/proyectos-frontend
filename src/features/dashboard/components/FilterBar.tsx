@@ -1,14 +1,17 @@
 import { IconoFiltro } from '../../../components/Iconos'
 import { PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, RCA_STATUS_LABELS, RCA_STATUS_ORDER } from '../constants'
 import type { Catalog } from '../types'
-import type { DashboardFilters, FilterKey } from '../useDashboardFilters'
+import { filterValues, type DashboardFilters, type FilterKey } from '../useDashboardFilters'
 import { useFilterOptions } from '../useDashboardData'
 import { allRegionsLabel } from '../../../lib/regionScope'
+import { MultiSelect, type MultiSelectOption } from './MultiSelect'
 
 interface Props {
   catalog: Catalog | null
   filters: DashboardFilters
   setFilter: (key: FilterKey, value: string | null) => void
+  /** Adds/removes one value of a filter, against the latest state. */
+  toggleFilter: (key: FilterKey, value: string) => void
   clearFilters: () => void
   activeCount: number
   /** Filters fixed by the user's scope: shown disabled, with a lock. */
@@ -21,12 +24,30 @@ interface Props {
  * Global filter bar. Every control writes into the shared filter state, so a
  * change here recomputes the whole dashboard at once.
  *
+ * Every filter except the dates takes SEVERAL values (checkbox dropdowns):
+ * values of the same filter are OR'ed, different filters are AND'ed — e.g.
+ * agency CMN or SAG, in region Interregional.
+ *
  * The options of each dropdown are narrowed by the other active filters
  * (see useFilterOptions).
  */
-export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCount, locked = {}, regionChoices = null }: Props) {
+export function FilterBar({ catalog, filters, setFilter, toggleFilter, clearFilters, activeCount, locked = {}, regionChoices = null }: Props) {
   const options = useFilterOptions(catalog, filters)
   const isLocked = (key: FilterKey) => key in locked
+
+  /** One multi-value filter, wired to the shared filter state. */
+  const multi = (key: FilterKey, label: string, placeholder: string, opts: MultiSelectOption[]) => (
+    <MultiSelect
+      label={label}
+      values={filterValues(filters[key])}
+      options={opts}
+      placeholder={placeholder}
+      onToggle={(value) => toggleFilter(key, value)}
+      onClear={() => setFilter(key, null)}
+      locked={isLocked(key)}
+    />
+  )
+  const plain = (values: string[]) => values.map((v) => ({ value: v, label: v }))
 
   return (
     <div className="panel filter-bar">
@@ -52,99 +73,36 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
       </div>
 
       <div className="panel__cuerpo">
+        <div className="texto-sm texto-tenue" style={{ marginBottom: 10 }}>
+          Puedes marcar varias opciones en cada filtro.
+        </div>
         <div className="filtros">
-          <Select
-            id="f-ministry"
-            label="Ministerio"
-            value={filters.ministryId ?? ''}
-            onChange={(value) => setFilter('ministryId', value)}
-            placeholder="Todos"
-            options={options.ministries.map((m) => ({ value: String(m.id), label: m.name }))}
-            locked={isLocked('ministryId')}
-          />
+          {multi('ministryId', 'Ministerio', 'Todos',
+            options.ministries.map((m) => ({ value: String(m.id), label: m.name })))}
 
-          <Select
-            id="f-agency"
-            label="Organismo"
-            value={filters.agencyId ?? ''}
-            onChange={(value) => setFilter('agencyId', value)}
-            placeholder="Todos"
-            options={options.agencies.map((a) => ({ value: String(a.id), label: a.name }))}
-            locked={isLocked('agencyId')}
-          />
+          {multi('agencyId', 'Organismo', 'Todos',
+            options.agencies.map((a) => ({ value: String(a.id), label: a.name })))}
 
-          <Select
-            id="f-region"
-            label="Región"
-            value={filters.region ?? ''}
-            onChange={(value) => setFilter('region', value)}
-            placeholder={allRegionsLabel(regionChoices)}
-            options={(regionChoices ?? options.regions).map((r) => ({ value: r, label: r }))}
-            locked={isLocked('region')}
-          />
+          {multi('region', 'Región', allRegionsLabel(regionChoices), plain(regionChoices ?? options.regions))}
 
-          <Select
-            id="f-sector"
-            label="Sector"
-            value={filters.sector ?? ''}
-            onChange={(value) => setFilter('sector', value)}
-            placeholder="Todos"
-            options={options.sectors.map((s) => ({ value: s, label: s }))}
-          />
+          {multi('sector', 'Sector', 'Todos', plain(options.sectors))}
 
-          <Select
-            id="f-project-status"
-            label="Estado del proyecto"
-            value={filters.projectStatus ?? ''}
-            onChange={(value) => setFilter('projectStatus', value)}
-            placeholder="Todos"
-            options={options.projectStatuses.map((s) => ({ value: s, label: s }))}
-          />
+          {multi('projectStatus', 'Estado del proyecto', 'Todos', plain(options.projectStatuses))}
 
-          <Select
-            id="f-permit-status"
-            label="Estado del permiso"
-            value={filters.permitStatus ?? ''}
-            onChange={(value) => setFilter('permitStatus', value)}
-            placeholder="Todos"
-            options={PERMIT_STATUS_ORDER.map((status) => ({
-              value: status,
-              label: PERMIT_STATUS_LABELS[status],
-            }))}
-          />
+          {multi('permitStatus', 'Estado del permiso', 'Todos',
+            PERMIT_STATUS_ORDER.map((status) => ({ value: status, label: PERMIT_STATUS_LABELS[status] })))}
 
-          <Select
-            id="f-company"
-            label="Empresa"
-            value={filters.companyId ?? ''}
-            onChange={(value) => setFilter('companyId', value)}
-            placeholder="Todas"
-            options={options.companies.map((c) => ({ value: String(c.id), label: c.name }))}
-          />
+          {multi('companyId', 'Empresa', 'Todas',
+            options.companies.map((c) => ({ value: String(c.id), label: c.name })))}
 
-          <Select
-            id="f-project"
-            label={`Proyecto${options.projects.length ? ` (${options.projects.length})` : ''}`}
-            value={filters.projectId ?? ''}
-            onChange={(value) => setFilter('projectId', value)}
-            placeholder="Todos"
-            options={options.projects.map((p) => ({
+          {multi('projectId', `Proyecto${options.projects.length ? ` (${options.projects.length})` : ''}`, 'Todos',
+            options.projects.map((p) => ({
               value: String(p.id),
               label: p.idExcel ? `${p.idExcel} - ${p.name}` : p.name,
-            }))}
-          />
+            })))}
 
-          <Select
-            id="f-rca"
-            label="Estado RCA"
-            value={filters.rcaStatus ?? ''}
-            onChange={(value) => setFilter('rcaStatus', value)}
-            placeholder="Todos"
-            options={RCA_STATUS_ORDER.map((status) => ({
-              value: status,
-              label: RCA_STATUS_LABELS[status],
-            }))}
-          />
+          {multi('rcaStatus', 'Estado RCA', 'Todos',
+            RCA_STATUS_ORDER.map((status) => ({ value: status, label: RCA_STATUS_LABELS[status] })))}
 
           <div className="campo">
             <label className="campo__label" htmlFor="f-start-from">
@@ -175,46 +133,6 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
           </div>
         </div>
       </div>
-    </div>
-  )
-}
-
-interface SelectProps {
-  id: string
-  label: string
-  value: string
-  placeholder: string
-  options: { value: string; label: string }[]
-  onChange: (value: string | null) => void
-  locked?: boolean
-}
-
-function Select({ id, label, value, placeholder, options, onChange, locked }: SelectProps) {
-  // A locked value may not be among the narrowed options; keep it visible anyway.
-  const shown = locked && value && !options.some((o) => o.value === value)
-    ? [...options, { value, label: value }]
-    : options
-  return (
-    <div className="campo">
-      <label className="campo__label" htmlFor={id}>
-        {label}
-        {locked && <span className="texto-tenue" title="Fijo según tu cuenta"> 🔒</span>}
-      </label>
-      <select
-        id={id}
-        className="select"
-        value={value}
-        disabled={locked}
-        title={locked ? 'Fijo según tu cuenta' : undefined}
-        onChange={(event) => onChange(event.target.value || null)}
-      >
-        <option value="">{placeholder}</option>
-        {shown.map((option) => (
-          <option key={option.value} value={option.value}>
-            {option.label}
-          </option>
-        ))}
-      </select>
     </div>
   )
 }

@@ -1,7 +1,7 @@
 import { useAuth } from '../../hooks/useAuth'
 import { Cargando, ErrorCaja } from '../../components/Estados'
 import { useMemo } from 'react'
-import { useDashboardFilters, type DashboardFilters } from './useDashboardFilters'
+import { filterValues, useDashboardFilters, type DashboardFilters } from './useDashboardFilters'
 import { useCatalog, useDashboardData } from './useDashboardData'
 import { FilterBar } from './components/FilterBar'
 import { ActiveFilters } from './components/ActiveFilters'
@@ -80,6 +80,7 @@ export function Dashboard() {
         catalog={catalog}
         filters={filters}
         setFilter={setFilter}
+        toggleFilter={toggleFilter}
         clearFilters={clearFilters}
         activeCount={activeCount}
         locked={locked}
@@ -113,7 +114,9 @@ export function Dashboard() {
               sectors={data.projectsBySector}
               selectedSector={filters.sector}
               onSelectSector={(sector) => toggleFilter('sector', sector)}
-              selectedRegion={filters.region}
+              // Zoom to a region only when exactly one is picked; with several,
+              // the map stays on all of Chile.
+              selectedRegion={filterValues(filters.region).length === 1 ? filters.region : undefined}
             />
           </div>
 

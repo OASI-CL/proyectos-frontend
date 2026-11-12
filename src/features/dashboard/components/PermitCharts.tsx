@@ -1,3 +1,4 @@
+import { isPicked } from '../useDashboardFilters'
 import {
   Bar, BarChart, Cell, CartesianGrid, Legend, LabelList, Pie, PieChart,
   ResponsiveContainer, Tooltip, XAxis, YAxis,
@@ -200,8 +201,8 @@ export function PermitStatusDonut({ rows, selected, onSelect }: DonutProps) {
                 <Cell
                   key={row.status}
                   fill={PERMIT_STATUS_FILL[row.status]}
-                  stroke={selected === row.status ? PERMIT_STATUS_STROKE[row.status] : undefined}
-                  strokeWidth={selected === row.status ? 3 : 0}
+                  stroke={isPicked(selected, row.status) ? PERMIT_STATUS_STROKE[row.status] : undefined}
+                  strokeWidth={isPicked(selected, row.status) ? 3 : 0}
                 />
               ))}
             </Pie>

@@ -1,7 +1,13 @@
 import { PERMIT_STATUS_LABELS, RCA_STATUS_LABELS } from '../constants'
 import { formatDate } from '../../../lib/formatters'
 import type { Catalog, PermitTrackingStatus, RcaStatus } from '../types'
-import type { DashboardFilters, FilterKey } from '../useDashboardFilters'
+import {
+  filterValues,
+  joinFilterValues,
+  MULTI_VALUE_KEYS,
+  type DashboardFilters,
+  type FilterKey,
+} from '../useDashboardFilters'
 
 interface Props {
   filters: DashboardFilters
@@ -31,8 +37,19 @@ const FILTER_LABELS: Record<FilterKey, string> = {
  * chips are how the user sees, and undoes, that selection.
  */
 export function ActiveFilters({ filters, catalog, setFilter }: Props) {
-  const entries = Object.entries(filters) as [FilterKey, string][]
+  // One chip per picked VALUE (multi-value filters hold several): removing a
+  // chip removes just that value, not the whole filter.
+  const entries = (Object.entries(filters) as [FilterKey, string][]).flatMap(([key, raw]) =>
+    MULTI_VALUE_KEYS.has(key)
+      ? filterValues(raw).map((value) => [key, value] as [FilterKey, string])
+      : [[key, raw] as [FilterKey, string]],
+  )
   if (entries.length === 0) return null
+
+  const remove = (key: FilterKey, value: string) => {
+    if (!MULTI_VALUE_KEYS.has(key)) return setFilter(key, null)
+    setFilter(key, joinFilterValues(filterValues(filters[key]).filter((v) => v !== value)))
+  }
 
   const describe = (key: FilterKey, value: string): string => {
     switch (key) {
@@ -62,10 +79,10 @@ export function ActiveFilters({ filters, catalog, setFilter }: Props) {
     <div className="active-filters">
       {entries.map(([key, value]) => (
         <button
-          key={key}
+          key={`${key}:${value}`}
           type="button"
           className="chip"
-          onClick={() => setFilter(key, null)}
+          onClick={() => remove(key, value)}
           title="Quitar este filtro"
         >
           <span className="chip__key">{FILTER_LABELS[key]}:</span>

@@ -1,3 +1,4 @@
+import { isPicked } from '../useDashboardFilters'
 import {
   Bar, BarChart, Cell, CartesianGrid, Legend, Pie, PieChart,
   ResponsiveContainer, Tooltip, Treemap, XAxis, YAxis,
@@ -64,7 +65,7 @@ export function ProjectsByRegionChart({ rows, selected, onSelect }: RegionProps)
             {rows.map((row) => (
               <Cell
                 key={row.region}
-                fill={selected === row.region ? CHART_SELECTED : CHART_PRIMARY}
+                fill={isPicked(selected, row.region) ? CHART_SELECTED : CHART_PRIMARY}
               />
             ))}
           </Bar>
@@ -183,7 +184,7 @@ function TreemapCell(props: TreemapCellProps) {
   const width = Math.round(widthRaw)
   const height = Math.round(heightRaw)
 
-  const isSelected = selected === sector
+  const isSelected = isPicked(selected, sector)
   const dimmed = selected !== undefined && !isSelected
   const percentLabel = `${Math.round(share * 100)}%`
   const canShowLabel = width > 56 && height > 34
@@ -273,7 +274,7 @@ export function RcaStatusChart({ rows, selected, onSelect }: RcaProps) {
                 key={row.rcaStatus}
                 fill={RCA_STATUS_FILL[row.rcaStatus] ?? '#D9D9D9'}
                 stroke={RCA_STATUS_STROKE[row.rcaStatus] ?? '#7F7F7F'}
-                strokeWidth={selected === row.rcaStatus ? 3 : 1}
+                strokeWidth={isPicked(selected, row.rcaStatus) ? 3 : 1}
               />
             ))}
           </Pie>
