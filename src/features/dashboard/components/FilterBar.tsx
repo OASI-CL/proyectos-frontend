@@ -3,6 +3,7 @@ import { PERMIT_STATUS_LABELS, PERMIT_STATUS_ORDER, RCA_STATUS_LABELS, RCA_STATU
 import type { Catalog } from '../types'
 import type { DashboardFilters, FilterKey } from '../useDashboardFilters'
 import { useFilterOptions } from '../useDashboardData'
+import { allRegionsLabel } from '../../../lib/regionScope'
 
 interface Props {
   catalog: Catalog | null
@@ -12,6 +13,8 @@ interface Props {
   activeCount: number
   /** Filters fixed by the user's scope: shown disabled, with a lock. */
   locked?: DashboardFilters
+  /** Only these regions can be picked (region accounts: own + interregional); null = all. */
+  regionChoices?: string[] | null
 }
 
 /**
@@ -21,7 +24,7 @@ interface Props {
  * The options of each dropdown are narrowed by the other active filters
  * (see useFilterOptions).
  */
-export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCount, locked = {} }: Props) {
+export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCount, locked = {}, regionChoices = null }: Props) {
   const options = useFilterOptions(catalog, filters)
   const isLocked = (key: FilterKey) => key in locked
 
@@ -75,8 +78,8 @@ export function FilterBar({ catalog, filters, setFilter, clearFilters, activeCou
             label="Región"
             value={filters.region ?? ''}
             onChange={(value) => setFilter('region', value)}
-            placeholder="Todas"
-            options={options.regions.map((r) => ({ value: r, label: r }))}
+            placeholder={allRegionsLabel(regionChoices)}
+            options={(regionChoices ?? options.regions).map((r) => ({ value: r, label: r }))}
             locked={isLocked('region')}
           />
 

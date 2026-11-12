@@ -22,6 +22,7 @@ import {
 } from './components/PermitCharts'
 import { CriticalPermitsBanner } from './components/CriticalPermitsBanner'
 import { InterregionalBox } from './components/InterregionalBox'
+import { allowedRegions } from '../../lib/regionScope'
 
 /**
  * Monitoring dashboard for investment projects and their permits.
@@ -42,10 +43,12 @@ export function Dashboard() {
   const { rol, esEmpresa, usuario } = useAuth()
   const { data: catalog } = useCatalog()
 
-  // A region user only ever sees its region, an organismo user only its
-  // agency (and that agency's ministry): those filters are fixed.
+  // An organismo user only sees its agency (and that agency's ministry): those
+  // filters are fixed. A region user is NOT locked to its region anymore: it
+  // sees its region + interregional (enforced by the backend), and its region
+  // select only offers those two (see lib/regionScope.ts).
+  const regionChoices = allowedRegions(rol, usuario?.region)
   const locked = useMemo<DashboardFilters>(() => {
-    if (rol === 'region' && usuario?.region) return { region: usuario.region }
     if (rol === 'organismo' && usuario?.organismoId) {
       const agency = catalog?.agencies.find((a) => a.id === usuario.organismoId)
       return {
@@ -80,6 +83,7 @@ export function Dashboard() {
         clearFilters={clearFilters}
         activeCount={activeCount}
         locked={locked}
+        regionChoices={regionChoices}
       />
 
       <ActiveFilters
@@ -186,8 +190,8 @@ export function Dashboard() {
           )}
           {rol === 'region' && (
             <div className="alerta alerta--info mt-24">
-              Estás viendo solo los proyectos de tu región, de todos los organismos. Los
-              interregionales están en su propia caja, arriba.
+              Estás viendo los proyectos de tu región y los interregionales, de todos los
+              organismos. Usa el filtro de región para ver solo uno de los dos.
             </div>
           )}
           {rol === 'empresa' && (
