@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useApi } from '../hooks/useApi'
 import { useFiltrosUrl } from '../hooks/useFiltrosUrl'
@@ -7,7 +8,8 @@ import { FiltrosPermisos } from '../components/FiltrosPermisos'
 import { SemaforoBadge, EstadoBadge, IdExcel } from '../components/SemaforoBadge'
 import { IconoDescargar } from '../components/Iconos'
 import { fecha, numero, texto } from '../lib/format'
-import { api } from '../lib/api'
+import { api, mensajeError } from '../lib/api'
+import { downloadPermitsXlsx, type PermitExportRow } from '../lib/exportPermitsXlsx'
 import type { PaginatedResponse, VPermiso } from '../shared/types'
 
 export function Permisos() {
@@ -30,17 +32,41 @@ export function Permisos() {
     }
   }
 
-  async function exportar() {
-    // Pide el CSV con los mismos filtros y lo descarga desde el navegador.
-    const respuesta = await api.get(`/permisos/export?${queryString}`, { responseType: 'blob' })
-    const url = URL.createObjectURL(respuesta.data as Blob)
-    const enlace = document.createElement('a')
-    enlace.href = url
-    enlace.download = `permisos-${new Date().toISOString().slice(0, 10)}.csv`
-    document.body.appendChild(enlace)
-    enlace.click()
-    document.body.removeChild(enlace)
-    URL.revokeObjectURL(url)
+  const [exporting, setExporting] = useState(false)
+  const [exportError, setExportError] = useState<string | null>(null)
+
+  /**
+   * Downloads an .xlsx with the PENDING permits that match the current
+   * filters. Asks first, so nobody expects the whole list or the resolved ones.
+   */
+  async function exportXlsx() {
+    const scope =
+      cantidadFiltros === 0
+        ? 'de todo el universo (no hay filtros aplicados)'
+        : cantidadFiltros === 1
+          ? 'que cumplen el filtro aplicado'
+          : `que cumplen los ${cantidadFiltros} filtros aplicados`
+    const ok = window.confirm(
+      `Se descargará un Excel (.xlsx) solo con los permisos PENDIENTES ${scope}.\n\n` +
+        'Los permisos resueltos no se incluyen. ¿Descargar?',
+    )
+    if (!ok) return
+
+    setExporting(true)
+    setExportError(null)
+    try {
+      const response = await api.get<{ data: PermitExportRow[] }>(`/permisos/export?${queryString}`)
+      const rows = response.data.data
+      if (rows.length === 0) {
+        setExportError('No hay permisos pendientes con esos filtros: no se descargó nada.')
+        return
+      }
+      await downloadPermitsXlsx(rows, `permisos-pendientes-${new Date().toISOString().slice(0, 10)}.xlsx`)
+    } catch (err) {
+      setExportError(mensajeError(err))
+    } finally {
+      setExporting(false)
+    }
   }
 
   const columnas: Columna<VPermiso>[] = [
@@ -127,11 +153,19 @@ export function Permisos() {
           </p>
         </div>
         <div className="pagina-header__acciones">
-          <button type="button" className="btn btn--secundario" onClick={exportar}>
-            <IconoDescargar /> Exportar a Excel
+          <button type="button" className="btn btn--secundario" onClick={exportXlsx} disabled={exporting}>
+            <IconoDescargar /> {exporting ? 'Preparando Excel…' : 'Exportar pendientes a Excel'}
           </button>
         </div>
       </div>
+
+      {/* Always visible next to the button, so it is clear what the file contains */}
+      <div className="alerta alerta--info">
+        La descarga incluye <strong>solo los permisos pendientes</strong> y respeta{' '}
+        <strong>los filtros que tengas aplicados</strong>
+        {cantidadFiltros > 0 ? ` (${cantidadFiltros} activo${cantidadFiltros === 1 ? '' : 's'})` : ' (ahora: ninguno)'}.
+      </div>
+      {exportError && <div className="alerta alerta--error">{exportError}</div>}
 
       <div className="panel">
         <div className="panel__header">
