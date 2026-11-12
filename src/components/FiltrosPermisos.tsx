@@ -1,5 +1,6 @@
 import { useCatalogos } from '../hooks/useCatalogos'
 import { useAuth } from '../hooks/useAuth'
+import { allowedRegions, allRegionsLabel } from '../lib/regionScope'
 
 interface Props {
   filtros: Record<string, string>
@@ -17,16 +18,16 @@ export function FiltrosPermisos({ filtros: filtrosUrl, setFiltro, limpiarFiltros
   const { datos: catalogos } = useCatalogos()
   const { rol, usuario } = useAuth()
 
-  // A region user only sees its region, an organismo user only its agency.
-  // The backend already enforces this; here the select just shows it fixed.
-  const fijoRegion = rol === 'region' && usuario?.region ? usuario.region : null
+  // A region user sees its region + interregional (its select only offers
+  // those two); an organismo user only its agency (shown fixed). The backend
+  // enforces both.
+  const regionesPermitidas = allowedRegions(rol, usuario?.region)
   const fijoOrganismo = rol === 'organismo' && usuario?.organismoId ? String(usuario.organismoId) : null
   const ministerioDelOrganismo = fijoOrganismo
     ? catalogos?.organismos.find((o) => String(o.id) === fijoOrganismo)?.ministerio_id
     : undefined
   const filtros: Record<string, string> = {
     ...filtrosUrl,
-    ...(fijoRegion ? { region: fijoRegion } : {}),
     ...(fijoOrganismo ? { organismo_id: fijoOrganismo } : {}),
     ...(ministerioDelOrganismo ? { ministerio_id: String(ministerioDelOrganismo) } : {}),
   }
@@ -110,17 +111,16 @@ export function FiltrosPermisos({ filtros: filtrosUrl, setFiltro, limpiarFiltros
         </div>
 
         <div className="campo">
-          <label className="campo__label" htmlFor="f-region">Región{fijoRegion && candado}</label>
+          <label className="campo__label" htmlFor="f-region">Región</label>
           <select
             id="f-region"
             className="select"
-            disabled={!!fijoRegion}
             value={filtros.region ?? ''}
             onChange={(e) => setFiltro('region', e.target.value)}
           >
-            <option value="">Todas</option>
-            {catalogos?.regiones.map((r) => (
-              <option key={r.id} value={r.nombre}>{r.nombre}</option>
+            <option value="">{allRegionsLabel(regionesPermitidas)}</option>
+            {(regionesPermitidas ?? catalogos?.regiones.map((r) => r.nombre) ?? []).map((nombre) => (
+              <option key={nombre} value={nombre}>{nombre}</option>
             ))}
           </select>
         </div>
