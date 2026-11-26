@@ -1,11 +1,12 @@
-import type { ReactNode } from 'react'
+import { Fragment, type ReactNode } from 'react'
 import { useApi } from '../hooks/useApi'
 import { Contenido } from '../components/Estados'
 import { formatDate, formatNumber } from '../lib/formatters'
 
 // ----------------------------------------------------------------------------
-// "Tablas PPT" view: the committee presentation tables, replicating the
-// sheet of the same name in the Excel. All the logic lives in the backend
+// "Tablas CME" view: the committee presentation tables, replicating the
+// sheet of the same name in the Excel (called "Tablas PPT Actualizada" until
+// the 26-11-2026 version). All the logic lives in the backend
 // (src/models/committeeTables.ts); this page only lays the numbers out with
 // the same rows/columns as the sheet so they can be copied into the deck.
 // ----------------------------------------------------------------------------
@@ -21,6 +22,7 @@ interface Table1Column {
   totalProjects: number
   projectsInProgress: number
   releasedProjects: number
+  withdrawnProjects: number
   totalPermits: number
   permitsInProgress: number
   resolvedPermits: number
@@ -55,6 +57,42 @@ interface Table4Row {
   noData: boolean
 }
 
+interface Table31Row {
+  ministry: string
+  agency: string
+  totalAtPrevious: number
+  pendingAtPrevious: number
+  resolvedAtPrevious: number
+  resolvedBetween: number
+  resolvedTotal: number
+  progress: number
+  added: number
+}
+
+interface Table41Row {
+  ministry: string
+  agency: string
+  total: number
+  progressBySession: (number | null)[]
+  added: number
+}
+
+interface UrgencyCounts {
+  total: number
+  resolved: number
+  resolvedBetween: number
+  /** null = the sheet's "-" (no permits). */
+  resolvedShare: number | null
+}
+
+interface UrgencyRow {
+  ministry: string
+  agency: string
+  nearConstruction: UrgencyCounts
+  investmentOrJobs: UrgencyCounts
+  total: UrgencyCounts
+}
+
 interface PriorityGroup {
   projects: number
   investmentMmusd: number
@@ -65,16 +103,19 @@ interface CommitteeTablesData {
   computedOn: string
   baselineDate: string
   secondBatchDate: string
+  thirdBatchDate: string
   currentSession: Session
   previousSession: Session | null
   sessions: Session[]
   summary: { nearConstruction: PriorityGroup; investmentOrJobs: PriorityGroup }
   table1: Table1Column[]
-  table11: { projects: number; investmentMmusd: number; constructionJobs: number }
   table21: { rows: StageRow[]; total: StageRow }
   table22: { rows: StageRow[]; total: StageRow }
   table3: { rows: Table3Row[]; total: Table3Row }
   table4: { rows: Table4Row[]; total: Table4Row; pointsGained: (number | null)[] }
+  urgency: { rows: UrgencyRow[]; total: UrgencyRow }
+  table31: { rows: Table31Row[]; total: Table31Row }
+  table41: { rows: Table41Row[]; total: Table41Row; pointsGained: (number | null)[] }
   permitsOutsideListedMinistries: number
 }
 
@@ -108,6 +149,7 @@ function Table1({ data }: { data: CommitteeTablesData }) {
     { label: 'Proyectos totales', key: 'totalProjects', group: true },
     { label: 'En trámite', key: 'projectsInProgress' },
     { label: 'Liberados', key: 'releasedProjects' },
+    { label: 'Desistidos', key: 'withdrawnProjects' },
     { label: 'Permisos totales', key: 'totalPermits', group: true },
     { label: 'En trámite', key: 'permitsInProgress' },
     { label: 'Resueltos', key: 'resolvedPermits' },
@@ -116,7 +158,11 @@ function Table1({ data }: { data: CommitteeTablesData }) {
   return (
     <TablePanel
       title="Tabla 1: proyectos y permisos pendientes por sesión"
-      subtitle={`Desde el ${formatDate(data.secondBatchDate)} se suman los proyectos del catastro 2 que siguen activos.`}
+      subtitle={
+        `Desde el ${formatDate(data.secondBatchDate)} se suman los proyectos del catastro 2 (cada uno desde su sesión de ingreso)` +
+        ` y desde el ${formatDate(data.thirdBatchDate)} los del catastro 3. En la última sesión, "Liberados" incluye` +
+        ` las correcciones de la columna Factibilidad.`
+      }
     >
       <table className="tabla committee-tables">
         <thead>
@@ -163,27 +209,9 @@ function PrioritySummary({ data }: { data: CommitteeTablesData }) {
   )
 }
 
-function Table11({ data }: { data: CommitteeTablesData }) {
-  const t = data.table11
+function StageTable({ title, subtitle, countLabel, table }: { title: string; subtitle?: string; countLabel: string; table: CommitteeTablesData['table21'] }) {
   return (
-    <TablePanel
-      title="Tabla 1.1: proyectos con 100% de sus trámites con más de 6 meses"
-      subtitle={`Calculado a hoy (${formatDate(data.computedOn)}), igual que la planilla.`}
-    >
-      <table className="tabla committee-tables committee-tables--narrow">
-        <tbody>
-          <tr><td>Cantidad de proyectos</td><td className="der">{formatNumber(t.projects)}</td></tr>
-          <tr><td>Inversión (MMUSD)</td><td className="der">{formatNumber(t.investmentMmusd, 0)}</td></tr>
-          <tr><td>Empleo</td><td className="der">{formatNumber(t.constructionJobs)}</td></tr>
-        </tbody>
-      </table>
-    </TablePanel>
-  )
-}
-
-function StageTable({ title, countLabel, table }: { title: string; countLabel: string; table: CommitteeTablesData['table21'] }) {
-  return (
-    <TablePanel title={title}>
+    <TablePanel title={title} subtitle={subtitle}>
       <table className="tabla committee-tables">
         <thead>
           <tr>
@@ -239,7 +267,7 @@ function Table3({ data }: { data: CommitteeTablesData }) {
   return (
     <TablePanel
       title="Tabla 3: avance y nivel de atraso de permisos por Ministerio"
-      subtitle={`Permisos ingresados hasta la sesión ${prev}; los registrados en la sesión ${curr} van aparte en "Se añaden".`}
+      subtitle={`Permisos ingresados hasta la sesión ${prev}; los registrados en la sesión ${curr} (la última del calendario) van aparte en "Se añaden".`}
     >
       <table className="tabla committee-tables">
         <thead>
@@ -332,6 +360,185 @@ function Table4({ data }: { data: CommitteeTablesData }) {
   )
 }
 
+/**
+ * "Permisos priorizados resueltos por servicio, según urgencia": universe
+ * permits of priority projects, by agency, for each "Urgencia" group.
+ */
+function UrgencyTable({ data }: { data: CommitteeTablesData }) {
+  const prev = data.previousSession?.number ?? data.currentSession.number
+  const curr = data.currentSession.number
+  const groups: { key: 'nearConstruction' | 'investmentOrJobs' | 'total'; label: string }[] = [
+    { key: 'nearConstruction', label: 'Urgencia por próximo a inicio de construcción' },
+    { key: 'investmentOrJobs', label: 'Urgencia por inversión y/o empleo' },
+    { key: 'total', label: 'Totales urgencia' },
+  ]
+  // "-" where the sheet writes it (no permits in that group).
+  const share = (c: UrgencyCounts) => (c.resolvedShare === null ? '-' : percent(c.resolvedShare))
+  const row = (r: UrgencyRow) => (
+    <>
+      <td>{r.ministry}</td>
+      <td>{r.agency}</td>
+      {groups.map((g) => (
+        <Fragment key={g.key}>
+          <td className="der">{formatNumber(r[g.key].total)}</td>
+          <td className="der">{formatNumber(r[g.key].resolved)}</td>
+          <td className="der">{formatNumber(r[g.key].resolvedBetween)}</td>
+          <td className="der">{share(r[g.key])}</td>
+        </Fragment>
+      ))}
+    </>
+  )
+  return (
+    <TablePanel
+      title="Permisos priorizados resueltos por servicio, según urgencia"
+      subtitle={
+        'Universo: permisos en universo. Próximo a inicio de construcción = Urgencia "Próximos a iniciar construcción 1/2";' +
+        ' inversión y/o empleo = Urgencia "Inversión", "Empleo" o "Inversión y Empleo".'
+      }
+    >
+      <table className="tabla committee-tables">
+        <thead>
+          <tr>
+            <th rowSpan={2}>Ministerio</th>
+            <th rowSpan={2}>Servicio</th>
+            {groups.map((g) => (
+              <th key={g.key} colSpan={4} className="centro">{g.label}</th>
+            ))}
+          </tr>
+          <tr>
+            {groups.map((g) => (
+              <Fragment key={g.key}>
+                <th className="der">Total</th>
+                <th className="der">Resueltos (#)</th>
+                <th className="der">Resueltos entre {prev} y {curr}</th>
+                <th className="der">Resueltos (%)</th>
+              </Fragment>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {data.urgency.rows.map((r) => <tr key={r.agency}>{row(r)}</tr>)}
+        </tbody>
+        <tfoot>
+          <tr>{row(data.urgency.total)}</tr>
+        </tfoot>
+      </table>
+    </TablePanel>
+  )
+}
+
+/** Tabla 3.1: Table 3 by agency. */
+function Table31({ data }: { data: CommitteeTablesData }) {
+  const prev = data.previousSession?.number ?? data.currentSession.number
+  const curr = data.currentSession.number
+  const row = (r: Table31Row) => (
+    <>
+      <td>{r.ministry}</td>
+      <td>{r.agency}</td>
+      <td className="der">{formatNumber(r.totalAtPrevious)}</td>
+      <td className="der">{formatNumber(r.pendingAtPrevious)}</td>
+      <td className="der">{formatNumber(r.resolvedAtPrevious)}</td>
+      <td className="der">{formatNumber(r.resolvedBetween)}</td>
+      <td className="der">{formatNumber(r.resolvedTotal)}</td>
+      <td className="der">{percent(r.progress)}</td>
+      <td className="der committee-tables__added">{formatNumber(r.added)}</td>
+    </>
+  )
+  return (
+    <TablePanel
+      title="Tabla 3.1: avance y nivel de atraso de permisos por Organismo"
+      subtitle={`Mismo cálculo que la Tabla 3, por organismo. Los registrados en la sesión ${curr} van aparte en "Se añaden".`}
+    >
+      <table className="tabla committee-tables">
+        <thead>
+          <tr>
+            <th rowSpan={2}>Ministerio</th>
+            <th rowSpan={2}>Servicio</th>
+            <th colSpan={2} className="centro">Permisos totales</th>
+            <th colSpan={4} className="centro">Resueltos</th>
+            <th rowSpan={2} className="der">Se añaden<br />(Comité {curr})</th>
+          </tr>
+          <tr>
+            <th className="der">Totales al Comité {prev}</th>
+            <th className="der">Pendientes al Comité {prev}</th>
+            <th className="der">Al Comité {prev}</th>
+            <th className="der">Entre Comité {prev} y {curr}</th>
+            <th className="der">Totales</th>
+            <th className="der">% Avance</th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.table31.rows.map((r) => <tr key={r.agency}>{row(r)}</tr>)}
+        </tbody>
+        <tfoot>
+          <tr>{row(data.table31.total)}</tr>
+        </tfoot>
+      </table>
+    </TablePanel>
+  )
+}
+
+/** Tabla 4.1: Table 4 by agency. */
+function Table41({ data }: { data: CommitteeTablesData }) {
+  const current = data.currentSession
+  const row = (r: Table41Row) => (
+    <>
+      <td>{r.ministry}</td>
+      <td>{r.agency}</td>
+      <td className="der">{formatNumber(r.total)}</td>
+      {r.progressBySession.map((p, i) => (
+        // empty when the agency has no permits, like the sheet
+        <td key={data.sessions[i].number} className="der">{p === null ? '' : percent(p)}</td>
+      ))}
+      <td className="der committee-tables__added">{formatNumber(r.added)}</td>
+    </>
+  )
+  return (
+    <TablePanel
+      title="Tabla 4.1: avance acumulado de permisos resueltos por Organismo, por sesión"
+      subtitle={`"Se añaden" = permisos que se registraron en la sesión ${current.number}.`}
+    >
+      <table className="tabla committee-tables">
+        <thead>
+          <tr>
+            <th>Ministerio</th>
+            <th>Servicio</th>
+            <th className="der">
+              Permisos totales
+              {data.previousSession && <div className="committee-tables__date">({shortDate(data.previousSession.date)})</div>}
+            </th>
+            {data.sessions.map((s) => (
+              <th key={s.number} className="der">
+                Sesión {s.number}
+                <div className="committee-tables__date">({shortDate(s.date)})</div>
+              </th>
+            ))}
+            <th className="der">
+              Se añaden
+              <div className="committee-tables__date">({shortDate(current.date)})</div>
+            </th>
+          </tr>
+        </thead>
+        <tbody>
+          {data.table41.rows.map((r) => <tr key={r.agency}>{row(r)}</tr>)}
+        </tbody>
+        <tfoot>
+          <tr>{row(data.table41.total)}</tr>
+          <tr className="committee-tables__points">
+            <td>Avance en puntos porcentuales</td>
+            <td />
+            <td />
+            {data.table41.pointsGained.map((p, i) => (
+              <td key={data.sessions[i].number} className="der">{p === null ? '' : formatNumber(p, 1)}</td>
+            ))}
+            <td />
+          </tr>
+        </tfoot>
+      </table>
+    </TablePanel>
+  )
+}
+
 export function CommitteeTables() {
   const { datos, cargando, error, recargar } = useApi<CommitteeTablesData>('/committee-tables')
 
@@ -341,7 +548,7 @@ export function CommitteeTables() {
         <div className="pagina-header__texto">
           <h1>Tablas del comité</h1>
           <p className="pagina-header__descripcion">
-            Las tablas de la presentación de cada sesión (hoja <strong>"Tablas PPT Actualizada"</strong> del Excel),
+            Las tablas de la presentación de cada sesión (hoja <strong>"Tablas CME"</strong> del Excel),
             calculadas en vivo con los datos de la base.
           </p>
         </div>
@@ -361,11 +568,18 @@ export function CommitteeTables() {
             <div className="committee-tables__stack">
               <Table1 data={data} />
               <PrioritySummary data={data} />
-              <Table11 data={data} />
               <StageTable title="Tabla 2.1: proyectos totales por etapa" countLabel="Cantidad de proyectos" table={data.table21} />
-              <StageTable title="Tabla 2.2: proyectos liberados por etapa" countLabel="Proyectos liberados" table={data.table22} />
+              <StageTable
+                title="Tabla 2.2: proyectos liberados por etapa"
+                subtitle='Agrupados por la columna "etapa_liberados"; sin los desistidos y con las correcciones de Factibilidad.'
+                countLabel="Proyectos liberados"
+                table={data.table22}
+              />
               <Table3 data={data} />
               <Table4 data={data} />
+              <UrgencyTable data={data} />
+              <Table31 data={data} />
+              <Table41 data={data} />
             </div>
 
             {data.permitsOutsideListedMinistries > 0 && (
